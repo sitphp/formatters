@@ -1,0 +1,32 @@
+{
+    "name": "sitphp/styles",
+    "description": "Simple PHP styled text parser",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Alexandre GEISWILLER",
+            "email": "alexandre.geiswiller@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.1",
+        "sitphp/helpers": "~1.0",
+        "sitphp/services": "~1.0",
+        "ext-dom": "*",
+        "ext-mbstring": "*"
+    },
+    "require-dev": {
+        "gealex/doublit": "~2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "SitPHP\\Styles\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "SitPHP\\Styles\\Tests\\": "tests"
+        }
+    }
+}
