@@ -1,6 +1,6 @@
 {
     "name": "sitphp/styles",
-    "description": "Simple PHP styled text parser",
+    "description": "A simple tool to parse and format styled text",
     "type": "library",
     "license": "MIT",
     "authors": [
