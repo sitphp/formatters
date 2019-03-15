@@ -2,13 +2,13 @@
 
 namespace SitPHP\Styles;
 
-use SitPHP\Services\Service;
+use SitPHP\Services\ServiceTrait;
 use SitPHP\Styles\Formatters\CliFormatter;
 use SitPHP\Styles\Formatters\FormatterInterface;
 
 class Parser
 {
-    use Service;
+    use ServiceTrait;
 
     protected static $services = [
         'style' => Style::class,
@@ -28,16 +28,17 @@ class Parser
      *
      * @param string $message
      * @param string $formatter_name
+     * @param int|null $width
      * @return mixed
      * @throws \Exception
      */
-    static function format(string $message, string $formatter_name){
+    static function format(string $message, string $formatter_name, int $width = null){
         self::init();
         $formatter = self::getFormatter($formatter_name);
         if($formatter === null){
             throw new \InvalidArgumentException('Unknown formatter "'.$formatter_name.'"');
         }
-        $parsed = self::parse($message);
+        $parsed = self::parse($message, $width);
         return $formatter::format($parsed);
     }
 

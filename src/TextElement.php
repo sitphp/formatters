@@ -2,11 +2,11 @@
 
 namespace SitPHP\Styles;
 
-use SitPHP\Services\Service;
+use SitPHP\Services\ServiceTrait;
 
 class TextElement
 {
-    use Service;
+    use ServiceTrait;
 
     protected static $services = [
         'style' => Style::class,
