@@ -67,6 +67,21 @@ class Parser
     }
 
     /**
+     * Call removeFormatting on given formatter
+     *
+     * @param string $message
+     * @param string $fomatter_name
+     * @return mixed
+     * @throws \Exception
+     */
+    static function removeFormatting(string $message, string $fomatter_name){
+        $formatter = self::getFormatter($fomatter_name);
+        if($formatter !== null){
+            return $formatter::removeFormatting($message);
+        }
+    }
+
+    /**
      * Build a new style
      *
      * @param string $name
