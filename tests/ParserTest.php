@@ -25,6 +25,42 @@ class ParserTest extends \Doublit\TestCase
     }
 
     /*
+     * Test format
+     */
+    function testFormat()
+    {
+        $format_double = Doublit::dummy(CliFormatter::class)->getClass();
+        $format_double::_method('format')
+            ->stub('formatted')
+            ->count(1);
+        Parser::setFormatterAlias('my_formatter', $format_double);
+        $parser = new Parser('my_formatter');
+        $this->assertEquals('formatted', $parser->format('my <cs color="red">message</cs>'));
+    }
+    function testFormatWithoutFormatterShouldFail(){
+        $this->expectException(\LogicException::class);
+        $parser = new Parser();
+        $parser->format('my message');
+    }
+
+    /*
+     * Test remove formatting
+     */
+    function testRemoveFormatting()
+    {
+        $cli_formatter = Doublit::dummy(CliFormatter::class)->getClass();
+        $cli_formatter::_method('removeFormatting')->stub(\Doublit\Stubs::returnArgument(1));
+        Parser::setFormatterAlias('cli', $cli_formatter);
+        $parser = new Parser('cli');
+        $this->assertEquals('message', $parser->removeFormatting('message'));
+    }
+    function testRemoveFormattingWithoutFormatterShouldFail(){
+        $this->expectException(\LogicException::class);
+        $parser = new Parser();
+        $parser->removeFormatting('my message');
+    }
+
+    /*
      * Test style
      */
     function testGetStyleTagShouldReturnInstanceOfStyle()
@@ -141,7 +177,7 @@ class ParserTest extends \Doublit\TestCase
     function testParseInvalidMessageShouldFail(){
         $this->expectException(\InvalidArgumentException::class);
         $parser = new Parser('cli');
-        $parsed = $parser->parse('my [31mmessage [0m[31m[34;41;1;4;5;7mstyle[0m[31m[0m[31m[0m');
+        $parser->parse('my [31mmessage [0m[31m[34;41;1;4;5;7mstyle[0m[31m[0m[31m[0m');
     }
 
     /*
@@ -216,31 +252,5 @@ class ParserTest extends \Doublit\TestCase
         $parser = new Parser('cli');
         $message = 'my <cs color="red" style="bold">message</cs>';
         $this->assertEquals($message, $parser->split($message, -3));
-    }
-
-    /*
-     * Test formatter alias
-     */
-    function testFormat()
-    {
-        $format_double = Doublit::dummy(CliFormatter::class)->getClass();
-        $format_double::_method('format')
-            ->stub('formatted')
-            ->count(1);
-        Parser::setFormatterAlias('my_formatter', $format_double);
-        $parser = new Parser('my_formatter');
-        $this->assertEquals('formatted', $parser->format('my <cs color="red">message</cs>'));
-    }
-
-    /*
-     * Test remove formatting
-     */
-    function testRemoveFormatting()
-    {
-        $cli_formatter = Doublit::dummy(CliFormatter::class)->getClass();
-        $cli_formatter::_method('removeFormatting')->stub(\Doublit\Stubs::returnArgument(1));
-        Parser::setFormatterAlias('cli', $cli_formatter);
-        $parser = new Parser('cli');
-        $this->assertEquals('message', $parser->removeFormatting('message'));
     }
 }

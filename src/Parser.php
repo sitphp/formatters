@@ -76,12 +76,23 @@ class Parser
         return self::$formatters[$alias] ?? null;
     }
 
-    function __construct(string $formatter)
+    function __construct(string $formatter = null)
     {
         self::init();
+        if($formatter !== null){
+            $this->setFormatter($formatter);
+        }
+    }
+
+    function setFormatter(string $formatter){
         $formatter_class = self::expectFormatter($formatter);
         $this->formatter = $formatter_class;
     }
+
+    function getFormatter(){
+        return $this->formatter;
+    }
+
 
     protected static function expectFormatter($formatter)
     {
@@ -107,7 +118,9 @@ class Parser
      */
     function format(string $message, int $width = null)
     {
-        $formatter = $this->getFormatter();
+        if(null === $formatter = $this->getFormatter()){
+            throw new \LogicException('Formatter should be set.');
+        }
         $parsed = $this->parse($message, $width);
         return $formatter::format($parsed);
     }
@@ -121,20 +134,11 @@ class Parser
      */
     function removeFormatting(string $message)
     {
+        if(null === $formatter = $this->getFormatter()){
+            throw new \LogicException('Formatter should be set.');
+        }
         $formatter = $this->getFormatter();
         return $formatter::removeFormatting($message);
-    }
-
-
-    /**
-     * Return formatter
-     *
-     * @return FormatterInterface
-     * @throws \Exception
-     */
-    function getFormatter()
-    {
-        return $this->formatter;
     }
 
     /**
