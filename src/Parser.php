@@ -19,9 +19,8 @@ class Parser
     protected static $initialized = false;
     protected static $style_methods_mapping = [];
 
-
     // User static properties
-    protected static $formatters = [];
+    protected static $formatters_alias = [];
 
     /** @var FormatterInterface $formatter */
     protected $formatter;
@@ -53,29 +52,51 @@ class Parser
     /**
      * Set formatter alias
      *
-     * @param string $alias
+     * @param string $name
      * @param string $class
      * @throws \Exception
      */
-    static function setFormatterAlias(string $alias, string $class)
+    static function setFormatterAlias(string $name, string $class)
     {
         self::init();
-        self::$formatters[$alias] = $class;
+        self::$formatters_alias[$name] = $class;
     }
 
     /**
      * Return formatter alias
      *
-     * @param string $alias
+     * @param string $name
      * @return mixed|null
      * @throws \Exception
      */
-    static function getFormatterAlias(string $alias)
+    static function getFormatterAlias(string $name)
     {
         self::init();
-        return self::$formatters[$alias] ?? null;
+        return self::$formatters_alias[$name] ?? null;
     }
 
+    /**
+     * Remove formatter alias
+     *
+     * @param string $name
+     * @throws \Exception
+     */
+    static function removeFormatterAlias(string $name){
+        self::init();
+        unset(self::$formatters_alias[$name]);
+    }
+
+    static function reset(){
+        self::$formatters_alias = [];
+        self::$style_methods_mapping = [];
+        self::$initialized = false;
+    }
+
+    /**
+     * Parser constructor.
+     * @param string|null $formatter
+     * @throws \Exception
+     */
     function __construct(string $formatter = null)
     {
         self::init();
@@ -166,6 +187,11 @@ class Parser
     function getTagStyle(string $name)
     {
         return $this->tags_styles[$name] ?? null;
+    }
+
+    function removeTagStyle(string $name)
+    {
+        unset($this->tags_styles[$name]);
     }
 
 

@@ -9,6 +9,12 @@ use SitPHP\Styles\TextElement;
 class ParserTest extends \Doublit\TestCase
 {
 
+    public function tearDown()
+    {
+        parent::tearDown();
+        Parser::reset();
+    }
+
     /*
      * Test construct
      */
@@ -59,6 +65,12 @@ class ParserTest extends \Doublit\TestCase
         $parser = new Parser();
         $parser->removeFormatting('my message');
     }
+    function testRemoveFormatterAlias(){
+        $this->expectException(\LogicException::class);
+        Parser::setFormatterAlias('formatter', CliFormatter::class);
+        Parser::removeFormatterAlias('formatter');
+        new Parser('formatter');
+    }
 
     /*
      * Test style
@@ -81,6 +93,13 @@ class ParserTest extends \Doublit\TestCase
         $parser->buildTagStyle('info')->setColor('blue');
         $this->assertInstanceOf(Style::class, $parser->getTagStyle('info'));
         $this->assertEquals('blue', $parser->getTagStyle('info')->getColor());
+    }
+    function testRemoveTagStyle()
+    {
+        $parser = new Parser('cli');
+        $parser->buildTagStyle('info')->setColor('blue');
+        $parser->removeTagStyle('info');
+        $this->assertNull($parser->getTagStyle('info'));
     }
 
     /*
