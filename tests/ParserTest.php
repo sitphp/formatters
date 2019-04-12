@@ -1,33 +1,38 @@
 <?php
 
 use Doublit\Doublit;
+use Doublit\TestCase;
 use SitPHP\Styles\Formatters\CliFormatter;
+use SitPHP\Styles\Formatters\FormatterInterface;
 use SitPHP\Styles\Parser;
+use SitPHP\Styles\ParserManager;
 use SitPHP\Styles\Style;
 use SitPHP\Styles\TextElement;
 
-class ParserTest extends \Doublit\TestCase
+class ParserTest extends TestCase
 {
-
-    public function tearDown()
-    {
-        parent::tearDown();
-        Parser::reset();
-    }
-
     /*
-     * Test construct
+     * Test get/set formatter
      */
-    function testFormatWithUndefinedFormatterShouldFail()
-    {
-        $this->expectException(\InvalidArgumentException::class);
-        new Parser('undefined');
+
+    function testGetSetFormatter(){
+        $parser = new Parser();
+        $parser->setFormatter(ParserTestFormatter::class);
+        $this->assertEquals(ParserTestFormatter::class, $parser->getFormatter());
     }
 
-    function testFormatWithInvalidFormatterShouldFail()
+    function testSetUndefinedFormatterShouldFail()
     {
         $this->expectException(\InvalidArgumentException::class);
-        new Parser(__CLASS__);
+        $parser = new Parser();
+        $parser->setFormatter('undefined');
+    }
+
+    function testSetInvalidFormatterShouldFail()
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $parser = new Parser();
+        $parser->setFormatter(__CLASS__);
     }
 
     /*
@@ -39,64 +44,54 @@ class ParserTest extends \Doublit\TestCase
         $format_double::_method('format')
             ->stub('formatted')
             ->count(1);
-        Parser::setFormatterAlias('my_formatter', $format_double);
-        $parser = new Parser('my_formatter');
+        $parser_manager = new ParserManager();
+        $parser_manager->setFormatterAlias('my_formatter', $format_double);
+        $parser = $parser_manager->parser('my_formatter');
         $this->assertEquals('formatted', $parser->format('my <cs color="red">message</cs>'));
     }
-    function testFormatWithoutFormatterShouldFail(){
-        $this->expectException(\LogicException::class);
+    function testFormatWithUndefinedFormatterShouldFail()
+    {
+        $this->expectException(LogicException::class);
         $parser = new Parser();
-        $parser->format('my message');
+        $parser->format('message');
     }
 
     /*
-     * Test remove formatting
+     * Test unformat
      */
-    function testRemoveFormatting()
+    function testUnFormat()
     {
-        $cli_formatter = Doublit::dummy(CliFormatter::class)->getClass();
-        $cli_formatter::_method('removeFormatting')->stub(\Doublit\Stubs::returnArgument(1));
-        Parser::setFormatterAlias('cli', $cli_formatter);
-        $parser = new Parser('cli');
-        $this->assertEquals('message', $parser->removeFormatting('message'));
+        $format_double = Doublit::dummy(CliFormatter::class)->getClass();
+        $format_double::_method('unFormat')
+            ->stub('unformatted')
+            ->count(1);
+        $parser_manager = new ParserManager();
+        $parser_manager->setFormatterAlias('my_formatter', $format_double);
+        $parser = $parser_manager->parser('my_formatter');
+        $this->assertEquals('unformatted', $parser->unFormat('my <cs color="red">message</cs>'));
     }
-    function testRemoveFormattingWithoutFormatterShouldFail(){
-        $this->expectException(\LogicException::class);
+
+    function testUnFormatWithUndefinedFormatterShouldFail()
+    {
+        $this->expectException(LogicException::class);
         $parser = new Parser();
-        $parser->removeFormatting('my message');
+        $parser->unFormat('message');
     }
-    function testRemoveFormatterAlias(){
-        $this->expectException(\LogicException::class);
-        Parser::setFormatterAlias('formatter', CliFormatter::class);
-        Parser::removeFormatterAlias('formatter');
-        new Parser('formatter');
-    }
+
 
     /*
      * Test style
      */
-    function testGetStyleTagShouldReturnInstanceOfStyle()
-    {
-        $parser = new Parser('cli');
-        $parser->buildTagStyle('warning')
-            ->setColor('yellow')
-            ->setBackgroundColor('yellow');
-        $style = $parser->getTagStyle('warning');
-        $this->assertInstanceOf(Style::class, $style);
-        $this->assertEquals('yellow', $style->getColor());
-        $this->assertEquals('yellow', $style->getBackgroundColor());
-    }
-
     function testGetTagStyle()
     {
-        $parser = new Parser('cli');
+        $parser = new Parser();
         $parser->buildTagStyle('info')->setColor('blue');
         $this->assertInstanceOf(Style::class, $parser->getTagStyle('info'));
         $this->assertEquals('blue', $parser->getTagStyle('info')->getColor());
     }
     function testRemoveTagStyle()
     {
-        $parser = new Parser('cli');
+        $parser = new Parser();
         $parser->buildTagStyle('info')->setColor('blue');
         $parser->removeTagStyle('info');
         $this->assertNull($parser->getTagStyle('info'));
@@ -107,13 +102,13 @@ class ParserTest extends \Doublit\TestCase
      */
     function testParseShouldReturnTextElement()
     {
-        $parser = new Parser('cli');
+        $parser = new Parser();
         $this->assertInstanceOf(TextElement::class, $parser->parse('my text'));
     }
 
     function testParseShouldUnderstandCsTags()
     {
-        $parser = new Parser('cli');
+        $parser = new Parser();
         $text = $parser->parse('my <cs>text</cs>');
         $content = $text->getContent();
         $this->assertEquals('my ', $content[0]);
@@ -123,7 +118,7 @@ class ParserTest extends \Doublit\TestCase
 
     function testParseShouldUnderstandStyleTags()
     {
-        $parser = new Parser('cli');
+        $parser = new Parser();
         $parser->buildTagStyle('warning');
         $text = $parser->parse('my <warning>text</warning>');
         $content = $text->getContent();
@@ -134,7 +129,7 @@ class ParserTest extends \Doublit\TestCase
 
     function testParseShouldIgnoreUndefinedTags()
     {
-        $parser = new Parser('cli');
+        $parser = new Parser();
         $text = $parser->parse('my <undefined>text</undefined>');
         $content = $text->getContent();
         $this->assertEquals('my <undefined>text</undefined>', $content[0]);
@@ -142,7 +137,7 @@ class ParserTest extends \Doublit\TestCase
 
     function testParseShouldApplyCsStyle()
     {
-        $parser = new Parser('cli');
+        $parser = new Parser();
         $text = $parser->parse('my <cs color="red" background-color="blue" bold="true" underline="true" blink="true" highlight="true">text</cs>');
 
         /** @var TextElement $content_1 */
@@ -158,7 +153,7 @@ class ParserTest extends \Doublit\TestCase
 
     function testParseShouldApplyCsStyleAttribute()
     {
-        $parser = new Parser('cli');
+        $parser = new Parser();
         $text = $parser->parse('my <cs style="color:red;background-color:blue;bold;underline;blink;highlight">text</cs>');
         /** @var TextElement $content_1 */
         $content_1 = $text->getContent()[1];
@@ -173,13 +168,13 @@ class ParserTest extends \Doublit\TestCase
     function testParseWithUndefinedStyleAttributeShouldFail()
     {
         $this->expectException(\InvalidArgumentException::class);
-        $parser = new Parser('cli');
+        $parser = new Parser();
         $parser->parse('my <cs undefined="undefined">text</cs>');
     }
 
     function testParseWithEmptyAttributeShouldBeIgnored()
     {
-        $parser = new Parser('cli');
+        $parser = new Parser();
         $parsed = $parser->parse('my <cs color="">message</cs>');
         /** @var TextElement $content_1 */
         $content_1 = $parsed->getContent()[1];
@@ -188,14 +183,14 @@ class ParserTest extends \Doublit\TestCase
 
     function testEscapedTagsShouldBeIgnored()
     {
-        $parser = new Parser('cli');
+        $parser = new Parser();
         $parsed = $parser->parse('my <cs color="red">me\<cs>ssage</cs>');
         $this->assertEquals('my me<cs>ssage', $parsed->getText());
     }
 
     function testParseInvalidMessageShouldFail(){
         $this->expectException(\InvalidArgumentException::class);
-        $parser = new Parser('cli');
+        $parser = new Parser();
         $parser->parse('my [31mmessage [0m[31m[34;41;1;4;5;7mstyle[0m[31m[0m[31m[0m');
     }
 
@@ -204,7 +199,7 @@ class ParserTest extends \Doublit\TestCase
      */
     function testToString()
     {
-        $parser = new Parser('cli');
+        $parser = new Parser();
         $parser->buildTagStyle('warning');
         $this->assertEquals('my text with warning and <undefined>undefined</undefined>', $parser->toString('my <cs color="red">text</cs> with <warning>warning</warning> and <undefined>undefined</undefined>'));
     }
@@ -214,7 +209,7 @@ class ParserTest extends \Doublit\TestCase
      */
     function testSplitWithoutChanges()
     {
-        $parser = new Parser('cli');
+        $parser = new Parser();
         $message_1 = 'my <cs color="red" style="bold">message</cs>';
         $message_2 = 'my message';
         $this->assertEquals($message_1, $parser->split($message_1));
@@ -223,7 +218,7 @@ class ParserTest extends \Doublit\TestCase
 
     function testSplitWidth()
     {
-        $parser = new Parser('cli');
+        $parser = new Parser();
         $message = 'my <cs color="red" style="bold">message</cs>';
         $expected = 'my <cs color="red" style="bold">mes</cs>' . "\n" . '<cs color="red" style="bold">sage</cs>';
 
@@ -232,14 +227,14 @@ class ParserTest extends \Doublit\TestCase
 
     function testSplitWithZeroWidth()
     {
-        $parser = new Parser('cli');
+        $parser = new Parser();
         $message = 'my <cs color="red" style="bold">message</cs>';
         $this->assertEquals($message, $parser->split($message, 0));
     }
 
     function testSplitShouldRespectLineBreaks()
     {
-        $parser = new Parser('cli');
+        $parser = new Parser();
         $message_1 = "my \n<cs color='red' style='bold'>message</cs>";
         $expected_1 = "my \n<cs color='red' style='bold'>mes</cs>\n<cs color='red' style='bold'>sag</cs>\n<cs color='red' style='bold'>e</cs>";
         $message_2 = "my <cs color='red' style='bold'>mess\nage</cs>";
@@ -268,8 +263,21 @@ class ParserTest extends \Doublit\TestCase
     function testSplitWithNegativeWidthShouldFail()
     {
         $this->expectException(\InvalidArgumentException::class);
-        $parser = new Parser('cli');
+        $parser = new Parser();
         $message = 'my <cs color="red" style="bold">message</cs>';
         $this->assertEquals($message, $parser->split($message, -3));
+    }
+}
+
+class ParserTestFormatter implements FormatterInterface{
+
+    static function format(TextElement $text)
+    {
+        // TODO: Implement format() method.
+    }
+
+    static function unFormat(string $text)
+    {
+        // TODO: Implement removeFormatting() method.
     }
 }

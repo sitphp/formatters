@@ -36,6 +36,6 @@ class CliFormatterTest extends TestCase
     function testRemoveFormatting(){
         $parser = new Parser('cli');
         $parsed = $parser->parse('my <cs color="red">message <cs color="blue" background-color="red" bold="true" blink="true" highlight="true" underline="true">style</cs></cs>');
-        $this->assertEquals('my message style', CliFormatter::removeFormatting(CliFormatter::format($parsed)));
+        $this->assertEquals('my message style', CliFormatter::unFormat(CliFormatter::format($parsed)));
     }
 }

@@ -101,7 +101,7 @@ class CliFormatter implements FormatterInterface
         return $style_code;
     }
 
-    static function removeFormatting(string $text){
+    static function unFormat(string $text){
         return preg_replace('#\\033\[[0-9;]+m#','', $text);
     }
 

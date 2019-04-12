@@ -2,28 +2,16 @@
 
 namespace SitPHP\Styles;
 
-use SitPHP\Services\ServiceTrait;
+use InvalidArgumentException;
 
 class TextElement
 {
-    use ServiceTrait;
 
-    protected static $services = [
-        'style' => Style::class,
-        'parser' => Parser::class
-    ];
-
-    // User properties
-    /** @var Style $style */
-    protected $style;
-    protected $style_name;
-    protected $content = [];
-    protected $text_color;
-    protected $background_color;
-    protected $bold = false;
-    protected $underline = false;
-    protected $highlight = false;
-    protected $blink = false;
+    /**
+     * @var Style
+     */
+    private $style;
+    private $content = [];
 
     function __construct($content = null, $style = null)
     {
@@ -32,14 +20,14 @@ class TextElement
             $this->addContent($content);
         }
         if(!isset($style)){
-            $style = self::getServiceInstance('style');
+            $style = new Style();
         }
         $this->setStyle($style);
     }
 
     function addContent($content){
         if(!is_string($content) && !is_a($content, self::class)){
-            throw new \InvalidArgumentException('Invalid $content type : expected string or instance of '.self::class);
+            throw new InvalidArgumentException('Invalid $content type : expected string or instance of '.self::class);
         }
         $this->content[] = $content;
     }

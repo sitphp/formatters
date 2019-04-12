@@ -6,12 +6,12 @@ namespace SitPHP\Styles;
 class Style
 {
 
-    protected $color;
-    protected $background_color;
-    protected $bold = false;
-    protected $underline = false;
-    protected $highlight = false;
-    protected $blink = false;
+    private $color;
+    private $background_color;
+    private $bold = false;
+    private $underline = false;
+    private $highlight = false;
+    private $blink = false;
 
 
     function setColor(string $color)

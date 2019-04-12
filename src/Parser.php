@@ -2,131 +2,76 @@
 
 namespace SitPHP\Styles;
 
-use SitPHP\Services\ServiceTrait;
-use SitPHP\Styles\Formatters\CliFormatter;
+use DOMDocument;
+use DOMElement;
+use DOMNamedNodeMap;
+use Exception;
+use InvalidArgumentException;
+use LogicException;
 use SitPHP\Styles\Formatters\FormatterInterface;
 
 class Parser
 {
-    use ServiceTrait;
 
-    protected static $services = [
-        'style' => Style::class,
-        'text_element' => TextElement::class
+    /**
+     * @var FormatterInterface
+     */
+    private $formatter;
+    private $tags_styles = [];
+
+    private $style_methods_mapping = [
+        'color' => 'setColor',
+        'background-color' => 'setBackgroundColor',
+        'bold' => 'bold',
+        'underline' => 'underline',
+        'blink' => 'blink',
+        'highlight' => 'highlight'
     ];
-
-    // Internal static properties
-    protected static $initialized = false;
-    protected static $style_methods_mapping = [];
-
-    // User static properties
-    protected static $formatters_alias = [];
-
-    /** @var FormatterInterface $formatter */
-    protected $formatter;
-    protected $tags_styles = [];
-
+    /**
+     * @var ParserManager
+     */
+    private $manager;
 
     /**
-     * Initialize the class
+     * Set formatter
      *
-     * @throws \Exception
+     * @param string $formatter
+     * @throws Exception
      */
-    protected static function init()
-    {
-        if (self::$initialized) {
-            return;
-        }
-        self::$initialized = true;
-
-        self::setFormatterAlias('cli', CliFormatter::class);
-
-        self::setStyleMethodMapping('color', 'setColor');
-        self::setStyleMethodMapping('background-color', 'setBackgroundColor');
-        self::setStyleMethodMapping('bold', 'bold');
-        self::setStyleMethodMapping('underline', 'underline');
-        self::setStyleMethodMapping('blink', 'blink');
-        self::setStyleMethodMapping('highlight', 'highlight');
-    }
-
-    /**
-     * Set formatter alias
-     *
-     * @param string $name
-     * @param string $class
-     * @throws \Exception
-     */
-    static function setFormatterAlias(string $name, string $class)
-    {
-        self::init();
-        self::$formatters_alias[$name] = $class;
-    }
-
-    /**
-     * Return formatter alias
-     *
-     * @param string $name
-     * @return mixed|null
-     * @throws \Exception
-     */
-    static function getFormatterAlias(string $name)
-    {
-        self::init();
-        return self::$formatters_alias[$name] ?? null;
-    }
-
-    /**
-     * Remove formatter alias
-     *
-     * @param string $name
-     * @throws \Exception
-     */
-    static function removeFormatterAlias(string $name){
-        self::init();
-        unset(self::$formatters_alias[$name]);
-    }
-
-    static function reset(){
-        self::$formatters_alias = [];
-        self::$style_methods_mapping = [];
-        self::$initialized = false;
-    }
-
-    /**
-     * Parser constructor.
-     * @param string|null $formatter
-     * @throws \Exception
-     */
-    function __construct(string $formatter = null)
-    {
-        self::init();
-        if($formatter !== null){
-            $this->setFormatter($formatter);
-        }
-    }
-
     function setFormatter(string $formatter){
-        $formatter_class = self::expectFormatter($formatter);
+        $formatter_class = $this->validateFormatter($formatter);
         $this->formatter = $formatter_class;
     }
 
+    /**
+     * Return formatter
+     *
+     * @return FormatterInterface
+     */
     function getFormatter(){
         return $this->formatter;
     }
 
+    /**
+     * Set parser manager
+     *
+     * @param ParserManager $manager
+     */
+    function setManager(ParserManager $manager){
+        $this->manager = $manager;
+    }
 
-    protected static function expectFormatter($formatter)
-    {
-        if (null !== self::getFormatterAlias($formatter)) {
-            $formatter = self::getFormatterAlias($formatter);
+    /**
+     * Return parser manager
+     *
+     * @return ParserManager
+     * @throws Exception
+     */
+    function getManager(){
+        if(!isset($this->manager)){
+            $this->manager = new ParserManager();
         }
-        if (!class_exists($formatter)) {
-            throw new \InvalidArgumentException('Invalid formatter "' . $formatter . '" : expected alias or existing class');
-        }
-        if (!is_subclass_of($formatter, FormatterInterface::class)) {
-            throw new \InvalidArgumentException('Invalid formatter class "' . $formatter . '" : expected subclass of ' . FormatterInterface::class);
-        }
-        return $formatter;
+        return $this->manager;
     }
 
     /**
@@ -135,31 +80,31 @@ class Parser
      * @param string $message
      * @param int|null $width
      * @return mixed
-     * @throws \Exception
+     * @throws Exception
      */
     function format(string $message, int $width = null)
     {
         if(null === $formatter = $this->getFormatter()){
-            throw new \LogicException('Formatter should be set.');
+            throw new LogicException('Formatter should be set.');
         }
         $parsed = $this->parse($message, $width);
-        return $formatter::format($parsed);
+        return $this->formatter::format($parsed);
     }
 
     /**
-     * Call removeFormatting on given formatter
+     * UnFormat message
      *
      * @param string $message
      * @return mixed
-     * @throws \Exception
+     * @throws Exception
      */
-    function removeFormatting(string $message)
+    function unFormat(string $message)
     {
         if(null === $formatter = $this->getFormatter()){
-            throw new \LogicException('Formatter should be set.');
+            throw new LogicException('Formatter should be set.');
         }
         $formatter = $this->getFormatter();
-        return $formatter::removeFormatting($message);
+        return $formatter::unFormat($message);
     }
 
     /**
@@ -167,14 +112,25 @@ class Parser
      *
      * @param string $name
      * @return Style
-     * @throws \Exception
+     * @throws Exception
      */
     function buildTagStyle(string $name)
     {
-        /* @var Style $style */
-        $style = self::getServiceInstance('style');
+        $style = new Style();
         $this->setTagStyle($name, $style);
         return $style;
+    }
+
+    /**
+     * Set a built style
+     *
+     * @param $name
+     * @param Style $style
+     * @throws Exception
+     */
+    function setTagStyle($name, Style $style)
+    {
+        $this->tags_styles[$name] = $style;
     }
 
     /**
@@ -182,13 +138,18 @@ class Parser
      *
      * @param string $name
      * @return Style
-     * @throws \Exception
+     * @throws Exception
      */
     function getTagStyle(string $name)
     {
         return $this->tags_styles[$name] ?? null;
     }
 
+    /**
+     * Remove tag style
+     *
+     * @param string $name
+     */
     function removeTagStyle(string $name)
     {
         unset($this->tags_styles[$name]);
@@ -198,7 +159,7 @@ class Parser
     /**
      * @param string $text
      * @return string|null
-     * @throws \Exception
+     * @throws Exception
      */
     function toString(string $text)
     {
@@ -211,19 +172,19 @@ class Parser
      * @param string $text
      * @param int|null $width
      * @return TextElement
-     * @throws \Exception
+     * @throws Exception
      */
     function parse(string $text, int $width = null)
     {
-        $prepared_text = self::split($text, $width);
-        $dom = new \DOMDocument();
+        $prepared_text = $this->split($text, $width);
+        $dom = new DOMDocument();
         // Should never happen
         try {
             $dom->loadXML('<node>' . $prepared_text . '</node>');
-        } catch (\Exception $e) {
-            throw new \InvalidArgumentException('Text "' . $text . '" could not be parsed : text should be in XML format');
+        } catch (Exception $e) {
+            throw new InvalidArgumentException('Text "' . $text . '" could not be parsed : text should be in XML format');
         }
-        $text = self::domToOutputText($dom->documentElement);
+        $text = $this->domToOutputText($dom->documentElement);
 
         return $text;
     }
@@ -231,47 +192,46 @@ class Parser
     /**
      * Transform dom element to text element
      *
-     * @param \DOMElement $dom
-     * @param \SitPHP\Styles\TextElement $text
-     * @throws \Exception
-     * @return \SitPHP\Styles\TextElement
+     * @param DOMElement $dom
+     * @param TextElement $text_el
+     * @return TextElement
+     * @throws Exception
      */
-    protected function domToOutputText(\DOMElement $dom, TextElement $text = null)
+    protected function domToOutputText(DOMElement $dom, TextElement $text_el = null)
     {
-        if (!isset($text)) {
-            /** @var TextElement $text */
-            $text = self::getServiceInstance('text_element');
+        if (!isset($text_el)) {
+            $text_el = new TextElement();
         }
         foreach ($dom->childNodes as $node) {
             switch ($node->nodeName) {
                 case '#text':
-                    $text->addContent($node->nodeValue);
+                    $text_el->addContent($node->nodeValue);
                     break;
                 case 'cs':
-                    $child_content = self::getServiceInstance('text_element');
+                    $child_el = new TextElement();
                     if (isset($node->attributes)) {
-                        self::applyNodeAttributes($child_content, $node->attributes);
+                        $this->applyNodeAttributes($child_el, $node->attributes);
                     }
-                    $text->addContent($child_content);
-                    $this->domToOutputText($node, $child_content);
+                    $text_el->addContent($child_el);
+                    $this->domToOutputText($node, $child_el);
                     break;
                 default:
                     $text_style = $this->getTagStyle($node->nodeName);
                     // Should never happen
                     if ($text_style === null) {
-                        throw new \Exception('Undefined style "' . $node->nodeName . '"');
+                        throw new Exception('Undefined style "' . $node->nodeName . '"');
                     }
-                    $child_content = self::getServiceInstance('text_element');
-                    $child_content->setStyle($text_style);
+                    $child_el = new TextElement();
+                    $child_el->setStyle($text_style);
                     if (isset($node->attributes)) {
-                        self::applyNodeAttributes($child_content, $node->attributes);
+                        $this->applyNodeAttributes($child_el, $node->attributes);
                     }
-                    $text->addContent($child_content);
-                    self::domToOutputText($node, $child_content);
+                    $text_el->addContent($child_el);
+                    $this->domToOutputText($node, $child_el);
                     break;
             }
         }
-        return $text;
+        return $text_el;
 
     }
 
@@ -282,12 +242,12 @@ class Parser
      * @param int|null $width
      * @param bool $encode_special_chars
      * @return string
-     * @throws \Exception
+     * @throws Exception
      */
     function split(string $content, int $width = null, bool $encode_special_chars = true)
     {
         if (isset($width) && $width < 0) {
-            throw new \InvalidArgumentException('Invalid $width argument : expected positive int');
+            throw new InvalidArgumentException('Invalid $width argument : expected positive int');
         }
         $opened_tags = [];
         $content_substr_start = 0;
@@ -308,11 +268,14 @@ class Parser
             ) {
                 continue;
             }
-            // If tag is escaped
-            $text_before = substr($content, $content_substr_start, $match_pos - $content_substr_start);
-            // Split text before tag
-            $splitted .= self::splitText($text_before, $current_line_char_count, $opened_tags, $width, $encode_special_chars);
 
+            // Get text before tab
+            $text_before = substr($content, $content_substr_start, $match_pos - $content_substr_start);
+
+            // Split text before tag
+            $splitted .= $this->splitText($text_before, $current_line_char_count, $opened_tags, $width, $encode_special_chars);
+
+            // Move offset to next tag
             $content_substr_start = $match_pos + strlen($match_tag);
 
             // Update matched tags
@@ -325,46 +288,50 @@ class Parser
                 ];
             }
         }
+
         // Split after last tag
         $text_after = substr($content, $content_substr_start);
-        $splitted .= self::splitText($text_after, $current_line_char_count, $opened_tags, $width, $encode_special_chars);
+        $splitted .= $this->splitText($text_after, $current_line_char_count, $opened_tags, $width, $encode_special_chars);
 
         return $splitted;
     }
 
+
     /**
-     * Set a built style
+     * Validate formatter
      *
-     * @param $name
-     * @param Style $style
-     * @throws \Exception
+     * @param $formatter
+     * @return mixed
+     * @throws Exception
      */
-    protected function setTagStyle($name, Style $style)
+    protected function validateFormatter($formatter)
     {
-        $this->tags_styles[$name] = $style;
+        if (null !== $this->getManager()->getFormatterAlias($formatter)) {
+            $formatter = $this->getManager()->getFormatterAlias($formatter);
+        }
+        if (!class_exists($formatter)) {
+            throw new InvalidArgumentException('Invalid formatter "' . $formatter . '" : expected formatter alias or formatter class');
+        }
+        if (!is_subclass_of($formatter, FormatterInterface::class)) {
+            throw new InvalidArgumentException('Invalid formatter class "' . $formatter . '" : expected subclass of ' . FormatterInterface::class);
+        }
+        return $formatter;
     }
 
     /**
-     * Set style method mapping
-     *
-     * @param string $style
-     * @param string $method
+     * @param TextElement $text
+     * @param DOMNamedNodeMap $node_attributes
      */
-    protected static function setStyleMethodMapping(string $style, string $method)
-    {
-        self::$style_methods_mapping[$style] = $method;
-    }
-
-    protected static function applyNodeAttributes(TextElement $text, \DOMNamedNodeMap $node_attributes)
+    protected function applyNodeAttributes(TextElement $text, DOMNamedNodeMap $node_attributes)
     {
         $attributes = [];
         foreach ($node_attributes as $name => $attribute) {
             $attributes[$name] = $attribute->nodeValue;
         }
-        self::applyArrayAttributes($text, $attributes);
+        $this->applyArrayAttributes($text, $attributes);
     }
 
-    protected static function applyArrayAttributes(TextElement $styled_text, array $style)
+    protected function applyArrayAttributes(TextElement $styled_text, array $style)
     {
         foreach ($style as $key => $value) {
             if (empty($value)) {
@@ -377,20 +344,20 @@ class Parser
                     $style_item = explode(':', $style_part);
                     $item_key = $style_item[0];
                     $item_value = isset($style_item[1]) ? $style_item[1] : true;
-                    self::applyStyleItem($styled_text, $item_key, $item_value);
+                    $this->applyStyleItem($styled_text, $item_key, $item_value);
                 }
             } else {
-                self::applyStyleItem($styled_text, $key, $value);
+                $this->applyStyleItem($styled_text, $key, $value);
             }
         }
     }
 
-    protected static function applyStyleItem($styled_text, $key, $value)
+    protected function applyStyleItem($styled_text, $key, $value)
     {
-        if (!isset(self::$style_methods_mapping[$key])) {
-            throw new \InvalidArgumentException('Undefined style ' . $key);
+        if (!isset($this->style_methods_mapping[$key])) {
+            throw new InvalidArgumentException('Undefined style ' . $key);
         }
-        $style_method = self::$style_methods_mapping[$key];
+        $style_method = $this->style_methods_mapping[$key];
         $styled_text->$style_method($value);
     }
 
@@ -402,7 +369,7 @@ class Parser
      * @param bool $encode_special_chars
      * @return bool|string
      */
-    protected static function splitText(string $text, &$current_line_char_count, $opened_tags = [], int $width = null, bool $encode_special_chars = true)
+    protected function splitText(string $text, &$current_line_char_count, $opened_tags = [], int $width = null, bool $encode_special_chars = true)
     {
 
         $text = strtr($text, ['\<' => '<']);
@@ -410,7 +377,7 @@ class Parser
             $text = htmlspecialchars($text);
         }
         if ($width === null) {
-            return self::wrapTextWithTags($text, $opened_tags);
+            return $this->wrapTextWithTags($text, $opened_tags);
         }
         if ($text === '') {
             return $text;
@@ -444,7 +411,7 @@ class Parser
 
             // Undefined width, just wrap every line with tags
             if ($width === 0) {
-                $splitted .= self::wrapTextWithTags($text_part, $opened_tags);
+                $splitted .= $this->wrapTextWithTags($text_part, $opened_tags);
                 continue;
             }
 
@@ -452,7 +419,7 @@ class Parser
             if ($current_line_char_count > 0 && $current_line_char_count < $width) {
                 $splitted_part = mb_substr($text_part, 0, $width - $current_line_char_count);
                 $text_part = mb_substr($text_part, $width - $current_line_char_count);
-                $splitted .= self::wrapTextWithTags($splitted_part, $opened_tags);
+                $splitted .= $this->wrapTextWithTags($splitted_part, $opened_tags);
                 $current_line_char_count += mb_strlen($splitted_part);
 
                 // Nothing left to add
@@ -486,7 +453,7 @@ class Parser
                     $split_part = mb_substr($text_part, $text_part_substr_start, $width);
                     $text_part_substr_start += $width;
                 }
-                $splitted .= self::wrapTextWithTags($split_part, $opened_tags);
+                $splitted .= $this->wrapTextWithTags($split_part, $opened_tags);
             }
         }
         return $splitted;
@@ -499,7 +466,7 @@ class Parser
      * @param array $tags
      * @return string
      */
-    protected static function resolveOpenTags(array $tags)
+    protected function resolveOpenTags(array $tags)
     {
         $open_tags = '';
         foreach ($tags as $tag) {
@@ -518,7 +485,7 @@ class Parser
      * @param array $tags
      * @return string
      */
-    protected static function resolveCloseTags(array $tags)
+    protected function resolveCloseTags(array $tags)
     {
         $close_tags = '';
         foreach (array_reverse($tags) as $tag) {
@@ -534,11 +501,11 @@ class Parser
      * @param array $tags
      * @return string
      */
-    protected static function wrapTextWithTags(string $text, array $tags)
+    protected function wrapTextWithTags(string $text, array $tags)
     {
-        $tagged_text = self::resolveOpenTags($tags);
+        $tagged_text = $this->resolveOpenTags($tags);
         $tagged_text .= $text;
-        $tagged_text .= self::resolveCloseTags($tags);
+        $tagged_text .= $this->resolveCloseTags($tags);
 
         return $tagged_text;
     }
