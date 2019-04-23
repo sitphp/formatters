@@ -12,7 +12,6 @@
     "require": {
         "php": ">=7.1",
         "sitphp/helpers": "~1.0",
-        "sitphp/services": "~1.1",
         "ext-dom": "*",
         "ext-mbstring": "*"
     },
