@@ -203,6 +203,11 @@ class ParserTest extends TestCase
         $parser->buildTagStyle('warning');
         $this->assertEquals('my text with warning and <undefined>undefined</undefined>', $parser->toString('my <cs color="red">text</cs> with <warning>warning</warning> and <undefined>undefined</undefined>'));
     }
+    function testToStringWidth()
+    {
+        $parser = new Parser();
+        $this->assertEquals('my text'.PHP_EOL.' with w'.PHP_EOL.'idth', $parser->toString('my <cs color="red">text</cs> with width', 7));
+    }
 
     /*
      * Test split

@@ -158,12 +158,13 @@ class Parser
 
     /**
      * @param string $text
+     * @param int $width
      * @return string|null
      * @throws Exception
      */
-    function toString(string $text)
+    function toString(string $text, int $width = null)
     {
-        return $this->parse($text)->getText();
+        return $this->parse($text, $width)->getText();
     }
 
     /**
