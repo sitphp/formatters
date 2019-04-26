@@ -22,18 +22,15 @@ class StyleManager
     }
 
     /**
-     * Return new parser instance
+     * Return new style instance
      *
      * @param string $formatter
      * @return Style
      * @throws Exception
      * @throws Exception
      */
-    function style(string $formatter = null){
-        $style = new Style($this);
-        if($formatter !== null){
-            $style->setFormatter($formatter);
-        }
+    function style(string $formatter){
+        $style = new Style($this, $formatter);
         return $style;
     }
 

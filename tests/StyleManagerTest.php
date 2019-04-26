@@ -42,7 +42,7 @@ class ParserManagerTest extends TestCase
         $style = $style_manager->style(ParserManagerTestFormatter::class);
 
         $this->assertInstanceOf(Style::class, $style);
-        $this->assertEquals(ParserManagerTestFormatter::class, $style->getFormatter());
+        $this->assertEquals(ParserManagerTestFormatter::class, $style->getFormatterClass());
     }
 }
 

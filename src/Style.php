@@ -7,7 +7,6 @@ use DOMElement;
 use DOMNamedNodeMap;
 use Exception;
 use InvalidArgumentException;
-use LogicException;
 use SitPHP\Styles\Formatters\FormatterInterface;
 
 class Style
@@ -32,20 +31,10 @@ class Style
      */
     private $manager;
 
-    function __construct(StyleManager $manager)
+    function __construct(StyleManager $manager, string $formatter)
     {
         $this->manager = $manager;
-    }
-
-    /**
-     * Set formatter
-     *
-     * @param string $formatter
-     * @throws Exception
-     */
-    function setFormatter(string $formatter){
-        $formatter_class = $this->validateFormatter($formatter);
-        $this->formatter = $formatter_class;
+        $this->formatter = $this->validateFormatter($formatter);
     }
 
     /**
@@ -53,7 +42,7 @@ class Style
      *
      * @return FormatterInterface
      */
-    function getFormatter(){
+    function getFormatterClass(){
         return $this->formatter;
     }
 
@@ -125,14 +114,7 @@ class Style
      */
     function format(string $message, int $width = null, string $formatter = null)
     {
-        if(null !== $formatter){
-            $formatter_class = $this->validateFormatter($formatter);
-        } else {
-            $formatter_class = $this->getFormatter();
-        }
-        if(null === $formatter_class){
-            throw new LogicException('Formatter should be set');
-        }
+        $formatter_class = $this->getFormatterClass();
         $parsed = $this->parse($message, $width);
         return $formatter_class::format($parsed);
     }
@@ -141,20 +123,11 @@ class Style
      * UnFormat message
      *
      * @param string $message
-     * @param string|null $formatter
      * @return mixed
-     * @throws Exception
      */
-    function unFormat(string $message, string $formatter = null)
+    function unFormat(string $message)
     {
-        if(null !== $formatter){
-            $formatter_class = $this->validateFormatter($formatter);
-        } else {
-            $formatter_class = $this->getFormatter();
-        }
-        if(null === $formatter_class){
-            throw new LogicException('Formatter should be set.');
-        }
+        $formatter_class = $this->getFormatterClass();
         return $formatter_class::unFormat($message);
     }
 

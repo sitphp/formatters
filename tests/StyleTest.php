@@ -17,25 +17,22 @@ class ParserTest extends TestCase
 
     function testGetSetFormatter(){
         $style_manager = new StyleManager();
-        $parser = new Style($style_manager);
-        $parser->setFormatter(ParserTestFormatter::class);
-        $this->assertEquals(ParserTestFormatter::class, $parser->getFormatter());
+        $style = new Style($style_manager, ParserTestFormatter::class);
+        $this->assertEquals(ParserTestFormatter::class, $style->getFormatterClass());
     }
 
     function testSetUndefinedFormatterShouldFail()
     {
         $this->expectException(InvalidArgumentException::class);
         $style_manager = new StyleManager();
-        $parser = new Style($style_manager);
-        $parser->setFormatter('undefined');
+        $style = new Style($style_manager, 'undefined');
     }
 
     function testSetInvalidFormatterShouldFail()
     {
         $this->expectException(InvalidArgumentException::class);
         $style_manager = new StyleManager();
-        $parser = new Style($style_manager);
-        $parser->setFormatter(__CLASS__);
+        $style = new Style($style_manager, __CLASS__);
     }
 
     /*
@@ -47,10 +44,10 @@ class ParserTest extends TestCase
         $format_double::_method('format')
             ->stub('formatted')
             ->count(1);
-        $parser_manager = new StyleManager();
-        $parser_manager->setFormatter('my_formatter', $format_double);
-        $parser = $parser_manager->style('my_formatter');
-        $this->assertEquals('formatted', $parser->format('my <cs color="red">message</cs>'));
+        $style_manager = new StyleManager();
+        $style_manager->setFormatter('my_formatter', $format_double);
+        $style = $style_manager->style('my_formatter');
+        $this->assertEquals('formatted', $style->format('my <cs color="red">message</cs>'));
     }
     function testFormatWithFormatter()
     {
@@ -58,16 +55,16 @@ class ParserTest extends TestCase
         $format_double::_method('format')
             ->stub('formatted')
             ->count(1);
-        $parser_manager = new StyleManager();
-        $parser = $parser_manager->style();
-        $this->assertEquals('formatted', $parser->format('my <cs color="red">message</cs>', null, $format_double));
+        $style_manager = new StyleManager();
+        $style = $style_manager->style('cli');
+        $this->assertEquals('formatted', $style->format('my <cs color="red">message</cs>', null, $format_double));
     }
     function testFormatWithUndefinedFormatterShouldFail()
     {
         $this->expectException(LogicException::class);
         $style_manager = new StyleManager();
-        $parser = new Style($style_manager);
-        $parser->format('message');
+        $style =$style_manager->style('undefined');
+        $style->format('message');
     }
 
     /*
@@ -79,10 +76,10 @@ class ParserTest extends TestCase
         $format_double::_method('unFormat')
             ->stub('unformatted')
             ->count(1);
-        $parser_manager = new StyleManager();
-        $parser_manager->setFormatter('my_formatter', $format_double);
-        $parser = $parser_manager->style('my_formatter');
-        $this->assertEquals('unformatted', $parser->unFormat('my <cs color="red">message</cs>'));
+        $style_manager = new StyleManager();
+        $style_manager->setFormatter('my_formatter', $format_double);
+        $style = $style_manager->style('my_formatter');
+        $this->assertEquals('unformatted', $style->unFormat('my <cs color="red">message</cs>'));
     }
     function testUnFormatWithFormatter()
     {
@@ -90,17 +87,17 @@ class ParserTest extends TestCase
         $format_double::_method('unFormat')
             ->stub('unformatted')
             ->count(1);
-        $parser_manager = new StyleManager();
-        $parser = $parser_manager->style();
-        $this->assertEquals('unformatted', $parser->unFormat('my <cs color="red">message</cs>', $format_double));
+        $style_manager = new StyleManager();
+        $style = $style_manager->style('cli');
+        $this->assertEquals('unformatted', $style->unFormat('my <cs color="red">message</cs>', $format_double));
     }
 
     function testUnFormatWithUndefinedFormatterShouldFail()
     {
         $this->expectException(LogicException::class);
         $style_manager = new StyleManager();
-        $parser = new Style($style_manager);
-        $parser->unFormat('message');
+        $style = new Style($style_manager, 'undefined');
+        $style->unFormat('message');
     }
 
 
@@ -110,18 +107,18 @@ class ParserTest extends TestCase
     function testGetTagStyle()
     {
         $style_manager = new StyleManager();
-        $parser = new Style($style_manager);
-        $parser->buildTagStyle('info')->setColor('blue');
-        $this->assertInstanceOf(TagStyle::class, $parser->getTagStyle('info'));
-        $this->assertEquals('blue', $parser->getTagStyle('info')->getColor());
+        $style = new Style($style_manager, 'cli');
+        $style->buildTagStyle('info')->setColor('blue');
+        $this->assertInstanceOf(TagStyle::class, $style->getTagStyle('info'));
+        $this->assertEquals('blue', $style->getTagStyle('info')->getColor());
     }
     function testRemoveTagStyle()
     {
         $style_manager = new StyleManager();
-        $parser = new Style($style_manager);
-        $parser->buildTagStyle('info')->setColor('blue');
-        $parser->removeTagStyle('info');
-        $this->assertNull($parser->getTagStyle('info'));
+        $style = new Style($style_manager, 'cli');
+        $style->buildTagStyle('info')->setColor('blue');
+        $style->removeTagStyle('info');
+        $this->assertNull($style->getTagStyle('info'));
     }
 
     /*
@@ -130,15 +127,15 @@ class ParserTest extends TestCase
     function testParseShouldReturnTextElement()
     {
         $style_manager = new StyleManager();
-        $parser = new Style($style_manager);
-        $this->assertInstanceOf(TextElement::class, $parser->parse('my text'));
+        $style = new Style($style_manager, 'cli');
+        $this->assertInstanceOf(TextElement::class, $style->parse('my text'));
     }
 
     function testParseShouldUnderstandCsTags()
     {
         $style_manager = new StyleManager();
-        $parser = new Style($style_manager);
-        $text = $parser->parse('my <cs>text</cs>');
+        $style = new Style($style_manager, 'cli');
+        $text = $style->parse('my <cs>text</cs>');
         $content = $text->getContent();
         $this->assertEquals('my ', $content[0]);
         $this->assertInstanceOf(TextElement::class, $content[1]);
@@ -148,9 +145,9 @@ class ParserTest extends TestCase
     function testParseShouldUnderstandStyleTags()
     {
         $style_manager = new StyleManager();
-        $parser = new Style($style_manager);
-        $parser->buildTagStyle('warning');
-        $text = $parser->parse('my <warning>text</warning>');
+        $style = new Style($style_manager, 'cli');
+        $style->buildTagStyle('warning');
+        $text = $style->parse('my <warning>text</warning>');
         $content = $text->getContent();
         $this->assertEquals('my ', $content[0]);
         $this->assertInstanceOf(TextElement::class, $content[1]);
@@ -160,8 +157,8 @@ class ParserTest extends TestCase
     function testParseShouldIgnoreUndefinedTags()
     {
         $style_manager = new StyleManager();
-        $parser = new Style($style_manager);
-        $text = $parser->parse('my <undefined>text</undefined>');
+        $style = new Style($style_manager, 'cli');
+        $text = $style->parse('my <undefined>text</undefined>');
         $content = $text->getContent();
         $this->assertEquals('my <undefined>text</undefined>', $content[0]);
     }
@@ -169,8 +166,8 @@ class ParserTest extends TestCase
     function testParseShouldApplyCsStyle()
     {
         $style_manager = new StyleManager();
-        $parser = new Style($style_manager);
-        $text = $parser->parse('my <cs color="red" background-color="blue" bold="true" underline="true" blink="true" highlight="true">text</cs>');
+        $style = new Style($style_manager, 'cli');
+        $text = $style->parse('my <cs color="red" background-color="blue" bold="true" underline="true" blink="true" highlight="true">text</cs>');
 
         /** @var TextElement $content_1 */
         $content_1 = $text->getContent()[1];
@@ -186,8 +183,8 @@ class ParserTest extends TestCase
     function testParseShouldApplyCsStyleAttribute()
     {
         $style_manager = new StyleManager();
-        $parser = new Style($style_manager);
-        $text = $parser->parse('my <cs style="color:red;background-color:blue;bold;underline;blink;highlight">text</cs>');
+        $style = new Style($style_manager, 'cli');
+        $text = $style->parse('my <cs style="color:red;background-color:blue;bold;underline;blink;highlight">text</cs>');
         /** @var TextElement $content_1 */
         $content_1 = $text->getContent()[1];
         $this->assertEquals('red', $content_1->getColor());
@@ -202,15 +199,15 @@ class ParserTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
         $style_manager = new StyleManager();
-        $parser = new Style($style_manager);
-        $parser->parse('my <cs undefined="undefined">text</cs>');
+        $style = new Style($style_manager, 'cli');
+        $style->parse('my <cs undefined="undefined">text</cs>');
     }
 
     function testParseWithEmptyAttributeShouldBeIgnored()
     {
         $style_manager = new StyleManager();
-        $parser = new Style($style_manager);
-        $parsed = $parser->parse('my <cs color="">message</cs>');
+        $style = new Style($style_manager, 'cli');
+        $parsed = $style->parse('my <cs color="">message</cs>');
         /** @var TextElement $content_1 */
         $content_1 = $parsed->getContent()[1];
         $this->assertNull($content_1->getColor());
@@ -219,16 +216,16 @@ class ParserTest extends TestCase
     function testEscapedTagsShouldBeIgnored()
     {
         $style_manager = new StyleManager();
-        $parser = new Style($style_manager);
-        $parsed = $parser->parse('my <cs color="red">me\<cs>ssage</cs>');
+        $style = new Style($style_manager, 'cli');
+        $parsed = $style->parse('my <cs color="red">me\<cs>ssage</cs>');
         $this->assertEquals('my me<cs>ssage', $parsed->getText());
     }
 
     function testParseInvalidMessageShouldFail(){
         $this->expectException(InvalidArgumentException::class);
         $style_manager = new StyleManager();
-        $parser = new Style($style_manager);
-        $parser->parse('my [31mmessage [0m[31m[34;41;1;4;5;7mstyle[0m[31m[0m[31m[0m');
+        $style = new Style($style_manager, 'cli');
+        $style->parse('my [31mmessage [0m[31m[34;41;1;4;5;7mstyle[0m[31m[0m[31m[0m');
     }
 
     /*
@@ -237,15 +234,15 @@ class ParserTest extends TestCase
     function testRaw()
     {
         $style_manager = new StyleManager();
-        $parser = new Style($style_manager);
-        $parser->buildTagStyle('warning');
-        $this->assertEquals('my text with warning and <undefined>undefined</undefined>', $parser->raw('my <cs color="red">text</cs> with <warning>warning</warning> and <undefined>undefined</undefined>'));
+        $style = new Style($style_manager, 'cli');
+        $style->buildTagStyle('warning');
+        $this->assertEquals('my text with warning and <undefined>undefined</undefined>', $style->raw('my <cs color="red">text</cs> with <warning>warning</warning> and <undefined>undefined</undefined>'));
     }
     function testRawTagsWidth()
     {
         $style_manager = new StyleManager();
-        $parser = new Style($style_manager);
-        $this->assertEquals('my text'.PHP_EOL.' with w'.PHP_EOL.'idth', $parser->raw('my <cs color="red">text</cs> with width', 7));
+        $style = new Style($style_manager, 'cli');
+        $this->assertEquals('my text'.PHP_EOL.' with w'.PHP_EOL.'idth', $style->raw('my <cs color="red">text</cs> with width', 7));
     }
 
     /*
@@ -254,35 +251,35 @@ class ParserTest extends TestCase
     function testSplitWithoutChanges()
     {
         $style_manager = new StyleManager();
-        $parser = new Style($style_manager);
+        $style = new Style($style_manager, 'cli');
         $message_1 = 'my <cs color="red" style="bold">message</cs>';
         $message_2 = 'my message';
-        $this->assertEquals($message_1, $parser->split($message_1));
-        $this->assertEquals($message_2, $parser->split($message_2));
+        $this->assertEquals($message_1, $style->split($message_1));
+        $this->assertEquals($message_2, $style->split($message_2));
     }
 
     function testSplitWidth()
     {
         $style_manager = new StyleManager();
-        $parser = new Style($style_manager);
+        $style = new Style($style_manager, 'cli');
         $message = 'my <cs color="red" style="bold">message</cs>';
         $expected = 'my <cs color="red" style="bold">mes</cs>' . "\n" . '<cs color="red" style="bold">sage</cs>';
 
-        $this->assertEquals($expected, $parser->split($message, 6));
+        $this->assertEquals($expected, $style->split($message, 6));
     }
 
     function testSplitWithZeroWidth()
     {
         $style_manager = new StyleManager();
-        $parser = new Style($style_manager);
+        $style = new Style($style_manager, 'cli');
         $message = 'my <cs color="red" style="bold">message</cs>';
-        $this->assertEquals($message, $parser->split($message, 0));
+        $this->assertEquals($message, $style->split($message, 0));
     }
 
     function testSplitShouldRespectLineBreaks()
     {
         $style_manager = new StyleManager();
-        $parser = new Style($style_manager);
+        $style = new Style($style_manager, 'cli');
         $message_1 = "my \n<cs color='red' style='bold'>message</cs>";
         $expected_1 = "my \n<cs color='red' style='bold'>mes</cs>\n<cs color='red' style='bold'>sag</cs>\n<cs color='red' style='bold'>e</cs>";
         $message_2 = "my <cs color='red' style='bold'>mess\nage</cs>";
@@ -300,21 +297,21 @@ class ParserTest extends TestCase
         $message_6 = "my <cs color='red' style='bold'>\n</cs>";
         $expected_6 = "my \n";
 
-        $this->assertEquals($expected_1, $parser->split($message_1, 3));
-        $this->assertEquals($expected_2, $parser->split($message_2, 3));
-        $this->assertEquals($expected_3, $parser->split($message_3, 3));
-        $this->assertEquals($expected_4, $parser->split($message_4, 3));
-        $this->assertEquals($expected_5, $parser->split($message_5, 6));
-        $this->assertEquals($expected_6, $parser->split($message_6, 6));
+        $this->assertEquals($expected_1, $style->split($message_1, 3));
+        $this->assertEquals($expected_2, $style->split($message_2, 3));
+        $this->assertEquals($expected_3, $style->split($message_3, 3));
+        $this->assertEquals($expected_4, $style->split($message_4, 3));
+        $this->assertEquals($expected_5, $style->split($message_5, 6));
+        $this->assertEquals($expected_6, $style->split($message_6, 6));
     }
 
     function testSplitWithNegativeWidthShouldFail()
     {
         $this->expectException(InvalidArgumentException::class);
         $style_manager = new StyleManager();
-        $parser = new Style($style_manager);
+        $style = new Style($style_manager, 'cli');
         $message = 'my <cs color="red" style="bold">message</cs>';
-        $this->assertEquals($message, $parser->split($message, -3));
+        $this->assertEquals($message, $style->split($message, -3));
     }
 }
 
