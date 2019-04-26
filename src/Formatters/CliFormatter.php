@@ -7,7 +7,6 @@ use SitPHP\Styles\TextElement;
 class CliFormatter implements FormatterInterface
 {
     static $text_colors = [
-
         'black' => '30',
         'red' => '31',
         'green' => '32',
@@ -66,6 +65,10 @@ class CliFormatter implements FormatterInterface
         return $formatted;
     }
 
+    static function unFormat(string $text){
+        return preg_replace('#\\033\[[0-9;]+m#','', $text);
+    }
+
     protected static function makeStyleCode(TextElement $text){
         $format_codes = [];
         $text_color = $text->getColor();
@@ -101,15 +104,11 @@ class CliFormatter implements FormatterInterface
         return $style_code;
     }
 
-    static function unFormat(string $text){
-        return preg_replace('#\\033\[[0-9;]+m#','', $text);
-    }
-
-    static function getTextColorMapping($color){
+    protected static function getTextColorMapping($color){
         return self::$text_colors[$color] ?? null;
     }
 
-    static function getBackgroundColorMapping($color){
+    protected static function getBackgroundColorMapping($color){
         return self::$background_colors[$color] ?? null;
     }
 }

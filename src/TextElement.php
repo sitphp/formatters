@@ -6,9 +6,8 @@ use InvalidArgumentException;
 
 class TextElement
 {
-
     /**
-     * @var Style
+     * @var TagStyle
      */
     private $style;
     private $content = [];
@@ -20,7 +19,7 @@ class TextElement
             $this->addContent($content);
         }
         if(!isset($style)){
-            $style = new Style();
+            $style = new TagStyle();
         }
         $this->setStyle($style);
     }
@@ -57,7 +56,7 @@ class TextElement
         return $text;
     }
 
-    function setStyle(Style $style)
+    function setStyle(TagStyle $style)
     {
         $this->style = $style;
         return $this;

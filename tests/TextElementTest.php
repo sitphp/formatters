@@ -7,7 +7,7 @@
  */
 
 use Doublit\TestCase;
-use SitPHP\Styles\Style;
+use SitPHP\Styles\TagStyle;
 use SitPHP\Styles\TextElement;
 
 class TextElementTest extends TestCase
@@ -52,7 +52,7 @@ class TextElementTest extends TestCase
      */
     function testGetStyleShouldReturnInstanceOfStyle(){
         $text_el = new TextElement('message');
-        $this->assertInstanceOf(Style::class, $text_el->getStyle());
+        $this->assertInstanceOf(TagStyle::class, $text_el->getStyle());
     }
     function testStyleShouldBeApplied(){
         $text_el = new TextElement('message');
