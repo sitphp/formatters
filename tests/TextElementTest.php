@@ -1,14 +1,8 @@
 <?php
-/**
- * Created by PhpStorm.
- * User: alexandre
- * Date: 2019-03-13
- * Time: 11:25
- */
 
 use Doublit\TestCase;
-use SitPHP\Styles\TagStyle;
-use SitPHP\Styles\TextElement;
+use SitPHP\Formatters\TagStyle;
+use SitPHP\Formatters\TextElement;
 
 class TextElementTest extends TestCase
 {

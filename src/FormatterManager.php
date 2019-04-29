@@ -1,12 +1,12 @@
 <?php
 
-namespace SitPHP\Styles;
+namespace SitPHP\Formatters;
 
 use Exception;
 use LogicException;
-use SitPHP\Styles\Formatters\CliFormatter;
+use SitPHP\Formatters\Formatters\CliFormatter;
 
-class StyleManager
+class FormatterManager
 {
 
     private $formatters = [];
@@ -22,15 +22,15 @@ class StyleManager
     }
 
     /**
-     * Return new style instance
+     * Return new formatter instance
      *
      * @param string $formatter
-     * @return Style
+     * @return Formatter
      * @throws Exception
      * @throws Exception
      */
-    function style(string $formatter){
-        $style = new Style($this, $formatter);
+    function formatter(string $formatter){
+        $style = new Formatter($this, $formatter);
         return $style;
     }
 

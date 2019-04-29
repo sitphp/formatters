@@ -1,15 +1,15 @@
 <?php
 
-namespace SitPHP\Styles;
+namespace SitPHP\Formatters;
 
 use DOMDocument;
 use DOMElement;
 use DOMNamedNodeMap;
 use Exception;
 use InvalidArgumentException;
-use SitPHP\Styles\Formatters\FormatterInterface;
+use SitPHP\Formatters\Formatters\FormatterInterface;
 
-class Style
+class Formatter
 {
 
     /**
@@ -27,11 +27,11 @@ class Style
         'highlight' => 'highlight'
     ];
     /**
-     * @var StyleManager
+     * @var FormatterManager
      */
     private $manager;
 
-    function __construct(StyleManager $manager, string $formatter)
+    function __construct(FormatterManager $manager, string $formatter)
     {
         $this->manager = $manager;
         $this->formatter = $this->validateFormatter($formatter);

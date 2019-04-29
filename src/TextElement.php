@@ -1,6 +1,6 @@
 <?php
 
-namespace SitPHP\Styles;
+namespace SitPHP\Formatters;
 
 use InvalidArgumentException;
 

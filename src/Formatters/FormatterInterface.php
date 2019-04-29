@@ -1,8 +1,8 @@
 <?php
 
-namespace SitPHP\Styles\Formatters;
+namespace SitPHP\Formatters\Formatters;
 
-use SitPHP\Styles\TextElement;
+use SitPHP\Formatters\TextElement;
 
 interface FormatterInterface
 {

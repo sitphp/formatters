@@ -1,6 +1,6 @@
 {
-    "name": "sitphp/styles",
-    "description": "A simple tool to parse and format styled text",
+    "name": "sitphp/formatters",
+    "description": "A simple tool format and parse styled text",
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -11,21 +11,21 @@
     ],
     "require": {
         "php": ">=7.1",
-        "sitphp/helpers": "~1.0",
+        "sitphp/helpers": "1.2.*",
         "ext-dom": "*",
         "ext-mbstring": "*"
     },
     "require-dev": {
-        "gealex/doublit": "~2.0"
+        "gealex/doublit": "2.1.*"
     },
     "autoload": {
         "psr-4": {
-            "SitPHP\\Styles\\": "src"
+            "SitPHP\\Formatters\\": "src"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "SitPHP\\Styles\\Tests\\": "tests"
+            "SitPHP\\Formatters\\Tests\\": "tests"
         }
     }
 }
