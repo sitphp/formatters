@@ -231,20 +231,36 @@ class ParserTest extends TestCase
     }
 
     /*
-     * Test remove tags
+     * Test plain
      */
-    function testRaw()
+    function testPlain()
     {
         $formatter_manager = new FormatterManager();
         $formatter = new Formatter($formatter_manager, 'cli');
         $formatter->buildTagStyle('warning');
-        $this->assertEquals('my text with warning and <undefined>undefined</undefined>', $formatter->raw('my <cs color="red">text</cs> with <warning>warning</warning> and <undefined>undefined</undefined>'));
+        $this->assertEquals('my text with warning and <undefined>undefined</undefined>', $formatter->plain('my <cs color="red">text</cs> with <warning>warning</warning> and <undefined>undefined</undefined>'));
     }
-    function testRawTagsWidth()
+    function testPlainTagsWidth()
     {
         $formatter_manager = new FormatterManager();
         $formatter = new Formatter($formatter_manager, 'cli');
-        $this->assertEquals('my text'.PHP_EOL.' with w'.PHP_EOL.'idth', $formatter->raw('my <cs color="red">text</cs> with width', 7));
+        $this->assertEquals('my text'.PHP_EOL.' with w'.PHP_EOL.'idth', $formatter->plain('my <cs color="red">text</cs> with width', 7));
+    }
+
+    /*
+     * Test raw
+     */
+    function testRaw(){
+        $formatter_manager = new FormatterManager();
+        $formatter = new Formatter($formatter_manager, 'cli');
+        $text = '<cs color="blue"></cs>';
+        $this->assertEquals($text, $formatter->raw($text));
+    }
+
+    function testRawWidth(){
+        $formatter_manager = new FormatterManager();
+        $formatter = new Formatter($formatter_manager, 'cli');
+        $this->assertEquals('<cs color='.PHP_EOL.'"blue"></c'.PHP_EOL.'s>', $formatter->raw('<cs color="blue">hello</cs>', 10));
     }
 
     /*

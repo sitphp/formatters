@@ -34,9 +34,9 @@ class ParserManagerTest extends TestCase
     }
 
     /*
-     * Test style
+     * Test formatter
      */
-    function testStyle(){
+    function testFormatter(){
         $formatter_manager = new FormatterManager();
         $formatter = $formatter_manager->formatter(ParserManagerTestFormatter::class);
 

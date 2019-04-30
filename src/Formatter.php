@@ -108,11 +108,10 @@ class Formatter
      *
      * @param string $message
      * @param int|null $width
-     * @param string|null $formatter
      * @return mixed
      * @throws Exception
      */
-    function format(string $message, int $width = null, string $formatter = null)
+    function format(string $message, int $width = null)
     {
         $formatter_class = $this->getFormatterClass();
         $parsed = $this->parse($message, $width);
@@ -131,6 +130,19 @@ class Formatter
         return $formatter_class::unFormat($message);
     }
 
+    /**
+     * @param string $message
+     * @param int $width
+     * @return string
+     * @throws Exception
+     */
+    function raw(string $message, int $width = null){
+        if(null === $width){
+            return $message;
+        }
+        return $this->mb_chunk_split($message, $width);
+    }
+
 
     /**
      * Remove string tags and optionally split to width
@@ -140,7 +152,7 @@ class Formatter
      * @return string|null
      * @throws Exception
      */
-    function raw(string $text, int $width = null)
+    function plain(string $text, int $width = null)
     {
         return $this->parse($text, $width)->getText();
     }
@@ -204,6 +216,17 @@ class Formatter
         $splitted .= $this->splitText($text_after, $current_line_char_count, $opened_tags, $width, $encode_special_chars);
 
         return $splitted;
+    }
+
+    protected function mb_chunk_split($body, int $chunklen = 76, $end = PHP_EOL)
+    {
+        $array = array_chunk(
+            preg_split("//u", $body, -1, PREG_SPLIT_NO_EMPTY), $chunklen);
+        $body = "";
+        foreach ($array as $item) {
+            $body .= implode('', $item) . $end;
+        }
+        return $body;
     }
 
     /**
