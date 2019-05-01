@@ -42,7 +42,8 @@ class Formatter
      *
      * @return FormatterInterface
      */
-    function getFormatterClass(){
+    function getFormatterClass()
+    {
         return $this->formatter;
     }
 
@@ -136,8 +137,9 @@ class Formatter
      * @return string
      * @throws Exception
      */
-    function raw(string $message, int $width = null){
-        if(null === $width){
+    function raw(string $message, int $width = null)
+    {
+        if (null === $width) {
             return $message;
         }
         return $this->mb_chunk_split($message, $width);
@@ -158,6 +160,28 @@ class Formatter
     }
 
     /**
+     * Parse a text to an TextElement object
+     *
+     * @param string $text
+     * @param int|null $width
+     * @return TextElement
+     * @throws Exception
+     */
+    function parse(string $text, int $width = null)
+    {
+        $prepared_text = $this->split($text, $width);
+        $dom = new DOMDocument();
+        // Should never happen
+        try {
+            $dom->loadXML('<node>' . $prepared_text . '</node>');
+        } catch (Exception $e) {
+            throw new InvalidArgumentException('Text "' . $text . '" could not be parsed : text should be in XML format');
+        }
+        $text = $this->domToOutputText($dom->documentElement);
+        return $text;
+    }
+
+    /**
      * Split a string with tags in multiple lines with proper tags
      *
      * @param string $content
@@ -166,7 +190,7 @@ class Formatter
      * @return string
      * @throws Exception
      */
-    function split(string $content, int $width = null, bool $encode_special_chars = true)
+    function split(string $content, int $width = null, bool $encode_special_chars = true, bool $preserve_escaped_tags = false)
     {
         if (isset($width) && $width < 0) {
             throw new InvalidArgumentException('Invalid $width argument : expected positive int');
@@ -195,7 +219,7 @@ class Formatter
             $text_before = substr($content, $content_substr_start, $match_pos - $content_substr_start);
 
             // Split text before tag
-            $splitted .= $this->splitText($text_before, $current_line_char_count, $opened_tags, $width, $encode_special_chars);
+            $splitted .= $this->splitText($text_before, $current_line_char_count, $opened_tags, $width, $encode_special_chars, $preserve_escaped_tags);
 
             // Move offset to next tag
             $content_substr_start = $match_pos + strlen($match_tag);
@@ -213,43 +237,118 @@ class Formatter
 
         // Split after last tag
         $text_after = substr($content, $content_substr_start);
-        $splitted .= $this->splitText($text_after, $current_line_char_count, $opened_tags, $width, $encode_special_chars);
+        $splitted .= $this->splitText($text_after, $current_line_char_count, $opened_tags, $width, $encode_special_chars, $preserve_escaped_tags);
 
         return $splitted;
     }
 
-    protected function mb_chunk_split($body, int $chunklen = 76, $end = PHP_EOL)
+    /**
+     * @param string $text
+     * @param $current_line_char_count
+     * @param array $opened_tags
+     * @param int|null $width
+     * @param bool $encode_special_chars
+     * @return bool|string
+     */
+    protected function splitText(string $text, &$current_line_char_count, $opened_tags = [], int $width = null, bool $encode_special_chars = true, bool $preserve_escaped_tags = false)
     {
-        $array = array_chunk(
-            preg_split("//u", $body, -1, PREG_SPLIT_NO_EMPTY), $chunklen);
-        $body = "";
-        foreach ($array as $item) {
-            $body .= implode('', $item) . $end;
+        $text = strtr($text, ['\<' => '<']);
+        if ($encode_special_chars) {
+            $text = htmlspecialchars($text);
         }
-        return $body;
+        if ($width === null) {
+            return $this->wrapTextWithTags($text, $opened_tags, $preserve_escaped_tags);
+        }
+        if ($text === '') {
+            return $text;
+        }
+        if ($text == "\n") {
+            return $text;
+        }
+        $splitted = '';
+        // If text starts with a repetition of 1 or more "\n"
+        if (preg_match("#^(\n)(\\1)*#", $text, $matches)) {
+            if (count($matches) === 2) {
+                $splitted .= "\n";
+                $current_line_char_count = 0;
+            }
+            $text = substr($text, 1);
+        }
+
+        $text_parts = explode("\n", $text);
+        foreach ($text_parts as $text_key => $text_part) {
+            // Text part is empty : its a line break
+            if ($text_part === '') {
+                $splitted .= "\n";
+                $current_line_char_count = 0;
+                continue;
+            }
+            // New line
+            if ($text_key > 0) {
+                $splitted .= "\n";
+                $current_line_char_count = 0;
+            }
+
+            // Width is zero, just wrap every line with tags
+            if ($width === 0) {
+                $splitted .= $this->wrapTextWithTags($text_part, $opened_tags, $preserve_escaped_tags);
+                continue;
+            }
+
+            // Current line is not full, fill it
+            if ($current_line_char_count > 0 && $current_line_char_count < $width) {
+                $splitted_part = mb_substr($text_part, 0, $width - $current_line_char_count);
+                $splitted .= $this->wrapTextWithTags($splitted_part, $opened_tags, $preserve_escaped_tags);
+
+                $text_part = mb_substr($text_part, $width - $current_line_char_count);
+                $current_line_char_count += mb_strlen($splitted_part);
+
+                // Nothing left to add
+                if ($text_part === '') {
+                    continue;
+                }
+            }
+
+            // End of the line reached
+            if ($current_line_char_count == $width) {
+                $splitted .= "\n";
+                $current_line_char_count = 0;
+            }
+
+            // Resolve text part lines
+            $text_part_length = mb_strlen($text_part);
+            $text_part_line_count = ceil($text_part_length / $width);
+            $text_part_substr_start = 0;
+            for ($i = 1; $i <= $text_part_line_count; $i++) {
+                if ($i > 1) {
+                    $splitted .= "\n";
+                    $current_line_char_count = 0;
+                }
+                // Last line
+                if ($i == $text_part_line_count) {
+                    $last_line_text = mb_substr($text_part, $text_part_substr_start);
+                    $current_line_char_count = mb_strlen($last_line_text);
+                    $split_part = $last_line_text;
+                } // Other lines
+                else {
+                    $split_part = mb_substr($text_part, $text_part_substr_start, $width);
+                    $text_part_substr_start += $width;
+                }
+                $splitted .= $this->wrapTextWithTags($split_part, $opened_tags, $preserve_escaped_tags);
+            }
+        }
+        return $splitted;
     }
 
-    /**
-     * Parse a text to an TextElement object
-     *
-     * @param string $text
-     * @param int|null $width
-     * @return TextElement
-     * @throws Exception
-     */
-    function parse(string $text, int $width = null)
+    protected function mb_chunk_split(string $string, int $chunklen = 76, $end = PHP_EOL)
     {
-        $prepared_text = $this->split($text, $width);
-        $dom = new DOMDocument();
-        // Should never happen
-        try {
-            $dom->loadXML('<node>' . $prepared_text . '</node>');
-        } catch (Exception $e) {
-            throw new InvalidArgumentException('Text "' . $text . '" could not be parsed : text should be in XML format');
+        $chars = preg_split("//u", $string, null, PREG_SPLIT_NO_EMPTY);
+        $array = array_chunk($chars, $chunklen);
+        $string_chunks = [];
+        foreach ($array as $item) {
+            $string_chunks[] = implode('', $item);
         }
-        $text = $this->domToOutputText($dom->documentElement);
-
-        return $text;
+        return implode($end, $string_chunks);
     }
 
 
@@ -363,103 +462,6 @@ class Formatter
         $styled_text->$style_method($value);
     }
 
-    /**
-     * @param string $text
-     * @param $current_line_char_count
-     * @param array $opened_tags
-     * @param int|null $width
-     * @param bool $encode_special_chars
-     * @return bool|string
-     */
-    protected function splitText(string $text, &$current_line_char_count, $opened_tags = [], int $width = null, bool $encode_special_chars = true)
-    {
-
-        $text = strtr($text, ['\<' => '<']);
-        if ($encode_special_chars) {
-            $text = htmlspecialchars($text);
-        }
-        if ($width === null) {
-            return $this->wrapTextWithTags($text, $opened_tags);
-        }
-        if ($text === '') {
-            return $text;
-        }
-        if ($text == "\n") {
-            return $text;
-        }
-        $splitted = '';
-        // If text starts with a repetition of 1 or more "\n"
-        if (preg_match("#^(\n)(\\1)*#", $text, $matches)) {
-            if (count($matches) === 2) {
-                $splitted .= "\n";
-                $current_line_char_count = 0;
-            }
-            $text = substr($text, 1);
-        }
-
-        $text_parts = explode("\n", $text);
-        foreach ($text_parts as $text_key => $text_part) {
-            // Text part is empty which means its a line break
-            if ($text_part === '') {
-                $splitted .= "\n";
-                $current_line_char_count = 0;
-                continue;
-            }
-            // New line
-            if ($text_key > 0) {
-                $splitted .= "\n";
-                $current_line_char_count = 0;
-            }
-
-            // Undefined width, just wrap every line with tags
-            if ($width === 0) {
-                $splitted .= $this->wrapTextWithTags($text_part, $opened_tags);
-                continue;
-            }
-
-            // Current line is not full, fill it
-            if ($current_line_char_count > 0 && $current_line_char_count < $width) {
-                $splitted_part = mb_substr($text_part, 0, $width - $current_line_char_count);
-                $text_part = mb_substr($text_part, $width - $current_line_char_count);
-                $splitted .= $this->wrapTextWithTags($splitted_part, $opened_tags);
-                $current_line_char_count += mb_strlen($splitted_part);
-
-                // Nothing left to add
-                if ($text_part === '') {
-                    continue;
-                }
-            }
-
-            // End of the line reached
-            if ($current_line_char_count == $width) {
-                $splitted .= "\n";
-                $current_line_char_count = 0;
-            }
-
-            // Resolve text part lines
-            $text_part_length = mb_strlen($text_part);
-            $text_part_lines = ceil($text_part_length / $width);
-            $text_part_substr_start = 0;
-            for ($i = 1; $i <= $text_part_lines; $i++) {
-                if ($i > 1) {
-                    $splitted .= "\n";
-                    $current_line_char_count = 0;
-                }
-                // Last line
-                if ($i == $text_part_lines) {
-                    $last_line_text = mb_substr($text_part, $text_part_substr_start);
-                    $current_line_char_count = mb_strlen($last_line_text);
-                    $split_part = $last_line_text;
-                } // Other lines
-                else {
-                    $split_part = mb_substr($text_part, $text_part_substr_start, $width);
-                    $text_part_substr_start += $width;
-                }
-                $splitted .= $this->wrapTextWithTags($split_part, $opened_tags);
-            }
-        }
-        return $splitted;
-    }
 
 
     /**
@@ -501,12 +503,13 @@ class Formatter
      *
      * @param string $text
      * @param array $tags
+     * @param bool $escape_text_tags
      * @return string
      */
-    protected function wrapTextWithTags(string $text, array $tags)
+    protected function wrapTextWithTags(string $text, array $tags, bool $escape_text_tags = false)
     {
         $tagged_text = $this->resolveOpenTags($tags);
-        $tagged_text .= $text;
+        $tagged_text .= $escape_text_tags ? strtr($text, ['<' => '\<']) : $text;
         $tagged_text .= $this->resolveCloseTags($tags);
 
         return $tagged_text;

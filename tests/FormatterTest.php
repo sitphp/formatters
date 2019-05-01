@@ -260,7 +260,7 @@ class ParserTest extends TestCase
     function testRawWidth(){
         $formatter_manager = new FormatterManager();
         $formatter = new Formatter($formatter_manager, 'cli');
-        $this->assertEquals('<cs color='.PHP_EOL.'"blue"></c'.PHP_EOL.'s>', $formatter->raw('<cs color="blue">hello</cs>', 10));
+        $this->assertEquals('<cs color='.PHP_EOL.'"blue">hel'.PHP_EOL.'lo</cs>', $formatter->raw('<cs color="blue">hello</cs>', 10));
     }
 
     /*
@@ -321,6 +321,12 @@ class ParserTest extends TestCase
         $this->assertEquals($expected_4, $formatter->split($message_4, 3));
         $this->assertEquals($expected_5, $formatter->split($message_5, 6));
         $this->assertEquals($expected_6, $formatter->split($message_6, 6));
+    }
+
+    function testSplitWithPreserveEscapedTags(){
+        $formatter_manager = new FormatterManager();
+        $formatter = new Formatter($formatter_manager, 'cli');
+        $this->assertEquals('<cs>message with \<error></cs>'.PHP_EOL.'<cs>escape\</error> tag</cs>', $formatter->split('<cs>message with \<error>escape\</error> tag</cs>',20, false, true));
     }
 
     function testSplitWithNegativeWidthShouldFail()
