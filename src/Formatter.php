@@ -192,16 +192,12 @@ class Formatter
      */
     function split(string $content, int $width = null, bool $encode_special_chars = true, bool $preserve_escaped_tags = false)
     {
-        if (isset($width) && $width < 0) {
-            throw new InvalidArgumentException('Invalid $width argument : expected positive int');
-        }
         $opened_tags = [];
         $content_substr_start = 0;
         $current_line_char_count = 0;
         $splitted = '';
 
         preg_match_all('#\\\\?<\/?\s*([a-z1-9]+)\s*([^<>]*?)\s*>#i', $content, $matches, PREG_OFFSET_CAPTURE);
-
         foreach ($matches[0] as $match_key => $match) {
 
             $match_tag = $match[0];
@@ -256,7 +252,7 @@ class Formatter
         if ($encode_special_chars) {
             $text = htmlspecialchars($text);
         }
-        if ($width === null) {
+        if ($width === null || $width < 0) {
             return $this->wrapTextWithTags($text, $opened_tags, $preserve_escaped_tags);
         }
         if ($text === '') {
@@ -342,6 +338,9 @@ class Formatter
 
     protected function mb_chunk_split(string $string, int $chunklen = 76, $end = PHP_EOL)
     {
+        if($chunklen <= 0){
+            return $string;
+        }
         $chars = preg_split("//u", $string, null, PREG_SPLIT_NO_EMPTY);
         $array = array_chunk($chars, $chunklen);
         $string_chunks = [];

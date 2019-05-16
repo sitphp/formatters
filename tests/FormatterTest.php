@@ -240,11 +240,18 @@ class ParserTest extends TestCase
         $formatter->buildTagStyle('warning');
         $this->assertEquals('my text with warning and <undefined>undefined</undefined>', $formatter->plain('my <cs color="red">text</cs> with <warning>warning</warning> and <undefined>undefined</undefined>'));
     }
-    function testPlainTagsWidth()
+    function testPlainWidth()
     {
         $formatter_manager = new FormatterManager();
         $formatter = new Formatter($formatter_manager, 'cli');
         $this->assertEquals('my text'.PHP_EOL.' with w'.PHP_EOL.'idth', $formatter->plain('my <cs color="red">text</cs> with width', 7));
+    }
+    function testPlainZeroNegativeWidth(){
+        $formatter_manager = new FormatterManager();
+        $formatter = new Formatter($formatter_manager, 'cli');
+        $text = '<cs color="blue">message</cs>';
+        $this->assertEquals('message', $formatter->plain($text, 0));
+        $this->assertEquals('message', $formatter->plain($text, -3));
     }
 
     /*
@@ -261,6 +268,14 @@ class ParserTest extends TestCase
         $formatter_manager = new FormatterManager();
         $formatter = new Formatter($formatter_manager, 'cli');
         $this->assertEquals('<cs color='.PHP_EOL.'"blue">hel'.PHP_EOL.'lo</cs>', $formatter->raw('<cs color="blue">hello</cs>', 10));
+    }
+
+    function testRawZeroNegativeWidth(){
+        $formatter_manager = new FormatterManager();
+        $formatter = new Formatter($formatter_manager, 'cli');
+        $text = '<cs color="blue"></cs>';
+        $this->assertEquals($text, $formatter->raw($text, -3));
+        $this->assertEquals($text, $formatter->raw($text, 0));
     }
 
     /*
@@ -329,14 +344,6 @@ class ParserTest extends TestCase
         $this->assertEquals('<cs>message with \<error></cs>'.PHP_EOL.'<cs>escape\</error> tag</cs>', $formatter->split('<cs>message with \<error>escape\</error> tag</cs>',20, false, true));
     }
 
-    function testSplitWithNegativeWidthShouldFail()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
-        $message = 'my <cs color="red" style="bold">message</cs>';
-        $this->assertEquals($message, $formatter->split($message, -3));
-    }
 }
 
 class ParserTestFormatter implements FormatterInterface{
