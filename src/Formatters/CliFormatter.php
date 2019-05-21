@@ -2,6 +2,7 @@
 
 namespace SitPHP\Formatters\Formatters;
 
+use InvalidArgumentException;
 use SitPHP\Formatters\TextElement;
 
 class CliFormatter implements FormatterInterface
@@ -14,7 +15,8 @@ class CliFormatter implements FormatterInterface
         'blue' => '34',
         'purple' => '35',
         'cyan' => '36',
-        'light_grey' => '90',
+        'light_grey' => '37',
+        'dark_grey' => '90',
         'light_red' => '91',
         'light_green' => '92',
         'light_yellow' => '93',
@@ -32,8 +34,8 @@ class CliFormatter implements FormatterInterface
         'blue' => '44',
         'magenta' => '45',
         'cyan' => '46',
-        'light_gray' => '47',
-        'dark_gray' => '100',
+        'light_grey' => '47',
+        'dark_grey' => '100',
         'light_red' => '101',
         'light_green' => '102',
         'light_yellow' => '103',
@@ -75,7 +77,7 @@ class CliFormatter implements FormatterInterface
         if($text_color !== null){
             $color_code = self::getTextColorMapping($text_color);
             if ($color_code === null) {
-                throw new \InvalidArgumentException('Undefined "'.$text_color.'"" text color');
+                throw new InvalidArgumentException('Undefined "'.$text_color.'"" text color');
             }
             $format_codes[] =  $color_code;
         }
@@ -83,21 +85,21 @@ class CliFormatter implements FormatterInterface
         if($background_color !== null){
             $color_code = self::getBackgroundColorMapping($background_color);
             if ($color_code === null) {
-                throw new \InvalidArgumentException('Undefined "'.$background_color.'" background color');
+                throw new InvalidArgumentException('Undefined "'.$background_color.'" background color');
             }
             $format_codes[] = $color_code;
         }
         if($text->isBold()){
-            $format_codes[] = "1";
+            $format_codes[] = '1';
         }
         if($text->isUnderlined()){
-            $format_codes[] = "4";
+            $format_codes[] = '4';
         }
         if($text->isBlinking()){
-            $format_codes[] = "5";
+            $format_codes[] = '5';
         }
         if($text->isHighlighted()){
-            $format_codes[] = "7";
+            $format_codes[] = '7';
         }
 
         $style_code = !empty($format_codes) ? "\033[".implode(';',$format_codes)."m" : null;
@@ -105,10 +107,16 @@ class CliFormatter implements FormatterInterface
     }
 
     protected static function getTextColorMapping($color){
+        if(filter_var($color, FILTER_VALIDATE_INT)){
+            return in_array($color, self::$text_colors) ? $color : null;
+        }
         return self::$text_colors[$color] ?? null;
     }
 
     protected static function getBackgroundColorMapping($color){
+        if(filter_var($color, FILTER_VALIDATE_INT)){
+            return in_array($color, self::$background_colors) ? $color : null;
+        }
         return self::$background_colors[$color] ?? null;
     }
 }
