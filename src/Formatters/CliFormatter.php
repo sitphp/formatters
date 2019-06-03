@@ -32,7 +32,7 @@ class CliFormatter implements FormatterInterface
         'green' => '42',
         'yellow' => '43',
         'blue' => '44',
-        'magenta' => '45',
+        'purple' => '45',
         'cyan' => '46',
         'light_grey' => '47',
         'dark_grey' => '100',
