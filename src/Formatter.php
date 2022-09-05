@@ -339,7 +339,7 @@ class Formatter
 
     protected function mb_chunk_split(string $string, int $chunklen = 76, $end = PHP_EOL)
     {
-        if($chunklen <= 0){
+        if ($chunklen <= 0) {
             return $string;
         }
         $chars = preg_split("//u", $string, null, PREG_SPLIT_NO_EMPTY);
@@ -360,7 +360,7 @@ class Formatter
      * @return TextElement
      * @throws Exception
      */
-    protected function domToOutputText(DOMElement$dom, TextElement $text_el = null)
+    protected function domToOutputText(DOMElement $dom, TextElement $text_el = null)
     {
         if (!isset($text_el)) {
             $text_el = new TextElement();
@@ -382,7 +382,7 @@ class Formatter
                     $tag_style = $this->getTagStyle($node->nodeName);
                     // Should never happen
                     if ($tag_style === null) {
-                        $text_el->addContent('<'.$node->nodeName.'>'.$node->nodeValue.'</'.$node->nodeName.'>');
+                        $text_el->addContent('<' . $node->nodeName . '>' . $node->nodeValue . '</' . $node->nodeName . '>');
                         break;
                     }
                     $child_el = new TextElement();
@@ -462,7 +462,6 @@ class Formatter
         $style_method = $this->style_methods_mapping[$key];
         $styled_text->$style_method($value);
     }
-
 
 
     /**

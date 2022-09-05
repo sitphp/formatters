@@ -1,5 +1,8 @@
 <?php
 
+namespace SitPHP\Formatters\Tests;
+
+
 use SitPHP\Doubles\TestCase;
 use SitPHP\Formatters\TagStyle;
 use SitPHP\Formatters\TextElement;
@@ -9,13 +12,16 @@ class TextElementTest extends TestCase
     /*
      * Test add content
      */
-    function testAddContent(){
+    function testAddContent()
+    {
         $text_el = new TextElement('message 1');
         $text_el_2 = new TextElement('message 2');
         $text_el->addContent($text_el_2);
         $this->assertEquals(['message 1', $text_el_2], $text_el->getContent());
     }
-    function testInvalidAddContentShouldFail(){
+
+    function testInvalidAddContentShouldFail()
+    {
         $this->expectException(\InvalidArgumentException::class);
         new TextElement(new \stdClass());
     }
@@ -29,12 +35,14 @@ class TextElementTest extends TestCase
         $text_el_2 = new TextElement('message 2');
 
         $text_el->setContent(['message 1', $text_el_2]);
-        $this->assertEquals(['message 1', $text_el_2] , $text_el->getContent());
+        $this->assertEquals(['message 1', $text_el_2], $text_el->getContent());
     }
+
     /*
      * Test get text
      */
-    function testGetText(){
+    function testGetText()
+    {
         $text_el = new TextElement('message 1');
         $text_el_2 = new TextElement('message 2');
         $text_el->addContent($text_el_2);
@@ -44,11 +52,14 @@ class TextElementTest extends TestCase
     /*
      * Test style
      */
-    function testGetStyleShouldReturnInstanceOfStyle(){
+    function testGetStyleShouldReturnInstanceOfStyle()
+    {
         $text_el = new TextElement('message');
         $this->assertInstanceOf(TagStyle::class, $text_el->getStyle());
     }
-    function testStyleShouldBeApplied(){
+
+    function testStyleShouldBeApplied()
+    {
         $text_el = new TextElement('message');
         $text_el
             ->setColor('red')

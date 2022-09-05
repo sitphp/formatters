@@ -15,38 +15,41 @@ class TextElement
     function __construct($content = null, $style = null)
     {
 
-        if(isset($content)){
+        if (isset($content)) {
             $this->addContent($content);
         }
-        if(!isset($style)){
+        if (!isset($style)) {
             $style = new TagStyle();
         }
         $this->setStyle($style);
     }
 
-    function addContent($content){
-        if(!is_string($content) && !is_a($content, self::class)){
-            throw new InvalidArgumentException('Invalid $content type : expected string or instance of '.self::class);
+    function addContent($content)
+    {
+        if (!is_string($content) && !is_a($content, self::class)) {
+            throw new InvalidArgumentException('Invalid $content type : expected string or instance of ' . self::class);
         }
         $this->content[] = $content;
     }
 
-    function setContent(array $content){
+    function setContent(array $content)
+    {
         $this->content = [];
-        foreach($content as $item){
+        foreach ($content as $item) {
             $this->addContent($item);
         }
     }
 
-    function getContent(){
+    function getContent()
+    {
         return $this->content;
     }
 
     function getText()
     {
         $text = '';
-        foreach ($this->content as $content){
-            if(is_string($content)){
+        foreach ($this->content as $content) {
+            if (is_string($content)) {
                 $text .= $content;
             } else {
                 /** @var $content self */

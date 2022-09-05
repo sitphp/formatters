@@ -1,10 +1,14 @@
 <?php
 
+namespace SitPHP\Formatters\Tests;
+
+
+use LogicException;
 use SitPHP\Doubles\TestCase;
-use SitPHP\Formatters\Formatters\CliFormatter;
-use SitPHP\Formatters\Formatters\FormatterInterface;
 use SitPHP\Formatters\Formatter;
 use SitPHP\Formatters\FormatterManager;
+use SitPHP\Formatters\Formatters\CliFormatter;
+use SitPHP\Formatters\Formatters\FormatterInterface;
 use SitPHP\Formatters\TextElement;
 
 class FormatterManagerTest extends TestCase
@@ -12,13 +16,15 @@ class FormatterManagerTest extends TestCase
     /*
      * Test formatter
      */
-    function testSetGetFormatter(){
+    function testSetGetFormatter()
+    {
         $formatter_manager = new FormatterManager();
         $formatter_manager->setFormatter('formatter', ParserManagerTestFormatter::class);
         $this->assertEquals(ParserManagerTestFormatter::class, $formatter_manager->getFormatterClass('formatter'));
     }
 
-    function testRemoveFormatter(){
+    function testRemoveFormatter()
+    {
         $formatter_manager = new FormatterManager();
         $formatter_manager->setFormatter('formatter', ParserManagerTestFormatter::class);
         $formatter_manager->removeFormatter('formatter');
@@ -26,7 +32,8 @@ class FormatterManagerTest extends TestCase
         $this->assertNull($formatter_manager->getFormatterClass('formatter'));
     }
 
-    function testSetFormatterWithDifferentShouldFail(){
+    function testSetFormatterWithDifferentShouldFail()
+    {
         $this->expectException(LogicException::class);
         $formatter_manager = new FormatterManager();
         $formatter_manager->setFormatter('formatter', ParserManagerTestFormatter::class);
@@ -36,7 +43,8 @@ class FormatterManagerTest extends TestCase
     /*
      * Test formatter
      */
-    function testFormatter(){
+    function testFormatter()
+    {
         $formatter_manager = new FormatterManager();
         $formatter = $formatter_manager->formatter(ParserManagerTestFormatter::class);
 
@@ -46,7 +54,8 @@ class FormatterManagerTest extends TestCase
 }
 
 
-class ParserManagerTestFormatter implements FormatterInterface{
+class ParserManagerTestFormatter implements FormatterInterface
+{
 
     static function format(TextElement $text)
     {

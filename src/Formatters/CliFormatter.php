@@ -49,73 +49,76 @@ class CliFormatter implements FormatterInterface
     {
         $formatted = '';
         $style = self::makeStyleCode($text);
-        if($style !== null){
+        if ($style !== null) {
             $formatted .= $style;
         }
-        foreach($text->getContent() as $item){
-            if(is_string($item)){
+        foreach ($text->getContent() as $item) {
+            if (is_string($item)) {
                 $formatted .= $item;
             } else {
                 $formatted .= self::format($item, $style);
             }
         }
-        if($style !== null) {
+        if ($style !== null) {
             $formatted .= "\033[0m";
         }
-        if(isset($previous_style)){
+        if (isset($previous_style)) {
             $formatted .= $previous_style;
         }
         return $formatted;
     }
 
-    static function unFormat(string $text){
-        return preg_replace('#\\033\[[0-9;]+m#','', $text);
+    static function unFormat(string $text)
+    {
+        return preg_replace('#\\033\[[0-9;]+m#', '', $text);
     }
 
     protected static function makeStyleCode(TextElement $text): ?string
     {
         $format_codes = [];
         $text_color = $text->getColor();
-        if($text_color !== null){
+        if ($text_color !== null) {
             $color_code = self::getTextColorMapping($text_color);
             if ($color_code === null) {
-                throw new InvalidArgumentException('Undefined "'.$text_color.'"" text color');
-            }
-            $format_codes[] =  $color_code;
-        }
-        $background_color = $text->getBackgroundColor();
-        if($background_color !== null){
-            $color_code = self::getBackgroundColorMapping($background_color);
-            if ($color_code === null) {
-                throw new InvalidArgumentException('Undefined "'.$background_color.'" background color');
+                throw new InvalidArgumentException('Undefined "' . $text_color . '"" text color');
             }
             $format_codes[] = $color_code;
         }
-        if($text->isBold()){
+        $background_color = $text->getBackgroundColor();
+        if ($background_color !== null) {
+            $color_code = self::getBackgroundColorMapping($background_color);
+            if ($color_code === null) {
+                throw new InvalidArgumentException('Undefined "' . $background_color . '" background color');
+            }
+            $format_codes[] = $color_code;
+        }
+        if ($text->isBold()) {
             $format_codes[] = '1';
         }
-        if($text->isUnderlined()){
+        if ($text->isUnderlined()) {
             $format_codes[] = '4';
         }
-        if($text->isBlinking()){
+        if ($text->isBlinking()) {
             $format_codes[] = '5';
         }
-        if($text->isHighlighted()){
+        if ($text->isHighlighted()) {
             $format_codes[] = '7';
         }
 
-        return !empty($format_codes) ? "\033[".implode(';',$format_codes)."m" : null;
+        return !empty($format_codes) ? "\033[" . implode(';', $format_codes) . "m" : null;
     }
 
-    protected static function getTextColorMapping($color){
-        if(filter_var($color, FILTER_VALIDATE_INT)){
+    protected static function getTextColorMapping($color)
+    {
+        if (filter_var($color, FILTER_VALIDATE_INT)) {
             return in_array($color, self::$text_colors) ? $color : null;
         }
         return self::$text_colors[$color] ?? null;
     }
 
-    protected static function getBackgroundColorMapping($color){
-        if(filter_var($color, FILTER_VALIDATE_INT)){
+    protected static function getBackgroundColorMapping($color)
+    {
+        if (filter_var($color, FILTER_VALIDATE_INT)) {
             return in_array($color, self::$background_colors) ? $color : null;
         }
         return self::$background_colors[$color] ?? null;

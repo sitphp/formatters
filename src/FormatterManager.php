@@ -29,7 +29,8 @@ class FormatterManager
      * @throws Exception
      * @throws Exception
      */
-    function formatter(string $formatter){
+    function formatter(string $formatter)
+    {
         $style = new Formatter($this, $formatter);
         return $style;
     }
@@ -44,8 +45,8 @@ class FormatterManager
     function setFormatter(string $name, string $class)
     {
         $existing_formatter = array_search($class, $this->formatters);
-        if($existing_formatter && $existing_formatter != $name){
-            throw new LogicException('Formatter '.$class.' is already set with name "'.$name.'"');
+        if ($existing_formatter && $existing_formatter != $name) {
+            throw new LogicException('Formatter ' . $class . ' is already set with name "' . $name . '"');
         }
         $this->formatters[$name] = $class;
     }
@@ -68,7 +69,8 @@ class FormatterManager
      * @param string $name
      * @throws Exception
      */
-    function removeFormatter(string $name){
+    function removeFormatter(string $name)
+    {
         unset($this->formatters[$name]);
     }
 }

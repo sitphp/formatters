@@ -1,9 +1,12 @@
 <?php
 
+namespace SitPHP\Formatters\Tests;
+
+use InvalidArgumentException;
 use SitPHP\Doubles\TestCase;
-use SitPHP\Formatters\Formatters\CliFormatter;
 use SitPHP\Formatters\Formatter;
 use SitPHP\Formatters\FormatterManager;
+use SitPHP\Formatters\Formatters\CliFormatter;
 
 class CliFormatterTest extends TestCase
 {
@@ -29,7 +32,7 @@ class CliFormatterTest extends TestCase
 
     function testFormatWithUndefinedColorShouldFail()
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $formatter_manager = new FormatterManager();
         $formatter = new Formatter($formatter_manager, 'cli');
         $parsed = $formatter->parse('my <cs color="undefined">message</cs>');
@@ -38,7 +41,7 @@ class CliFormatterTest extends TestCase
 
     function testFormatWithBackgroundColorShouldFail()
     {
-        $this->expectException(\InvalidArgumentException::class);
+        $this->expectException(InvalidArgumentException::class);
         $formatter_manager = new FormatterManager();
         $formatter = new Formatter($formatter_manager, 'cli');
         $parsed = $formatter->parse('my <cs background-color="undefined">message</cs>');
