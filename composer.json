@@ -11,12 +11,12 @@
   ],
   "require": {
     "php": ">=7.2",
-    "sitphp/helpers": "1.4.*",
+    "sitphp/helpers": "v1.4.*",
     "ext-dom": "*",
     "ext-mbstring": "*"
   },
   "require-dev": {
-    "sitphp/doubles": "2.4.*"
+    "sitphp/doubles": "v2.4.*"
   },
   "autoload": {
     "psr-4": {
