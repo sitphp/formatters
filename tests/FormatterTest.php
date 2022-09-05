@@ -1,7 +1,7 @@
 <?php
 
-use Doublit\Doublit;
-use Doublit\TestCase;
+use SitPHP\Doubles\Double;
+use SitPHP\Doubles\TestCase;
 use SitPHP\Formatters\Formatters\CliFormatter;
 use SitPHP\Formatters\Formatters\FormatterInterface;
 use SitPHP\Formatters\Formatter;
@@ -9,7 +9,7 @@ use SitPHP\Formatters\FormatterManager;
 use SitPHP\Formatters\TagStyle;
 use SitPHP\Formatters\TextElement;
 
-class ParserTest extends TestCase
+class FormatterTest extends TestCase
 {
     /*
      * Test get/set formatter
@@ -40,9 +40,9 @@ class ParserTest extends TestCase
      */
     function testFormat()
     {
-        $format_double = Doublit::dummy(CliFormatter::class)->getClass();
+        $format_double = Double::dummy(CliFormatter::class)->getClass();
         $format_double::_method('format')
-            ->stub('formatted')
+            ->return('formatted')
             ->count(1);
         $formatter_manager = new FormatterManager();
         $formatter_manager->setFormatter('my_formatter', $format_double);
@@ -51,9 +51,9 @@ class ParserTest extends TestCase
     }
     function testFormatWithFormatter()
     {
-        $format_double = Doublit::dummy(CliFormatter::class)->getClass();
+        $format_double = Double::dummy(CliFormatter::class)->getClass();
         $format_double::_method('format')
-            ->stub('formatted')
+            ->return('formatted')
             ->count(1);
         $formatter_manager = new FormatterManager();
         $formatter_manager->setFormatter('cli', $format_double);
@@ -73,9 +73,9 @@ class ParserTest extends TestCase
      */
     function testUnFormat()
     {
-        $format_double = Doublit::dummy(CliFormatter::class)->getClass();
+        $format_double = Double::dummy(CliFormatter::class)->getClass();
         $format_double::_method('unFormat')
-            ->stub('unformatted')
+            ->return('unformatted')
             ->count(1);
         $formatter_manager = new FormatterManager();
         $formatter_manager->setFormatter('my_formatter', $format_double);
@@ -84,9 +84,9 @@ class ParserTest extends TestCase
     }
     function testUnFormatWithFormatter()
     {
-        $format_double = Doublit::dummy(CliFormatter::class)->getClass();
+        $format_double = Double::dummy(CliFormatter::class)->getClass();
         $format_double::_method('unFormat')
-            ->stub('unformatted')
+            ->return('unformatted')
             ->count(1);
         $formatter_manager = new FormatterManager();
         $formatter_manager->setFormatter('cli', $format_double);
@@ -122,6 +122,7 @@ class ParserTest extends TestCase
         $formatter->removeTagStyle('info');
         $this->assertNull($formatter->getTagStyle('info'));
     }
+
 
     /*
      * Test parse
@@ -161,8 +162,8 @@ class ParserTest extends TestCase
         $formatter_manager = new FormatterManager();
         $formatter = new Formatter($formatter_manager, 'cli');
         $text = $formatter->parse('my <undefined>text</undefined>');
-        $content = $text->getContent();
-        $this->assertEquals('my <undefined>text</undefined>', $content[0]);
+        $content = $text->getText();
+        $this->assertEquals('my <undefined>text</undefined>', $content);
     }
 
     function testParseShouldApplyCsStyle()

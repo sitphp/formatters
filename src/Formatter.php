@@ -187,10 +187,11 @@ class Formatter
      * @param string $content
      * @param int|null $width
      * @param bool $encode_special_chars
+     * @param bool $preserve_escaped_tags
      * @return string
      * @throws Exception
      */
-    function split(string $content, int $width = null, bool $encode_special_chars = true, bool $preserve_escaped_tags = false)
+    function split(string $content, int $width = null, bool $encode_special_chars = true, bool $preserve_escaped_tags = false): string
     {
         $opened_tags = [];
         $content_substr_start = 0;
@@ -203,10 +204,10 @@ class Formatter
             $match_tag = $match[0];
             $match_pos = $match[1];
 
-            // If closing tag doesnt match previously opened tag or is unknown tag
-            if (($match_tag[0] == '\\')
-                || ($match_tag[1] === '/' && $matches[1][$match_key][0] !== end($opened_tags)['name'])
-                || ($matches[1][$match_key][0] != 'cs' && $this->getTagStyle($matches[1][$match_key][0]) === null)
+            // If closing tag doesn't match previously opened tag
+            if (
+                ($match_tag[0] == '\\')
+                || (!empty($opened_tags) && $match_tag[1] === '/' && $matches[1][$match_key][0] !== end($opened_tags)['name'])
             ) {
                 continue;
             }
@@ -246,7 +247,7 @@ class Formatter
      * @param bool $encode_special_chars
      * @return bool|string
      */
-    protected function splitText(string $text, &$current_line_char_count, $opened_tags = [], int $width = null, bool $encode_special_chars = true, bool $preserve_escaped_tags = false)
+    protected function splitText(string $text, &$current_line_char_count, array $opened_tags = [], int $width = null, bool $encode_special_chars = true, bool $preserve_escaped_tags = false)
     {
         $text = strtr($text, ['\<' => '<']);
         if ($encode_special_chars) {
@@ -359,7 +360,7 @@ class Formatter
      * @return TextElement
      * @throws Exception
      */
-    protected function domToOutputText(DOMElement $dom, TextElement $text_el = null)
+    protected function domToOutputText(DOMElement$dom, TextElement $text_el = null)
     {
         if (!isset($text_el)) {
             $text_el = new TextElement();
@@ -378,13 +379,14 @@ class Formatter
                     $this->domToOutputText($node, $child_el);
                     break;
                 default:
-                    $text_style = $this->getTagStyle($node->nodeName);
+                    $tag_style = $this->getTagStyle($node->nodeName);
                     // Should never happen
-                    if ($text_style === null) {
-                        throw new Exception('Undefined style "' . $node->nodeName . '"');
+                    if ($tag_style === null) {
+                        $text_el->addContent('<'.$node->nodeName.'>'.$node->nodeValue.'</'.$node->nodeName.'>');
+                        break;
                     }
                     $child_el = new TextElement();
-                    $child_el->setStyle($text_style);
+                    $child_el->setStyle($tag_style);
                     if (isset($node->attributes)) {
                         $this->applyNodeAttributes($child_el, $node->attributes);
                     }
@@ -501,15 +503,15 @@ class Formatter
      * Return text wrapped with tags
      *
      * @param string $text
-     * @param array $tags
+     * @param array $open_tags
      * @param bool $escape_text_tags
      * @return string
      */
-    protected function wrapTextWithTags(string $text, array $tags, bool $escape_text_tags = false)
+    protected function wrapTextWithTags(string $text, array $open_tags, bool $escape_text_tags = false)
     {
-        $tagged_text = $this->resolveOpenTags($tags);
+        $tagged_text = $this->resolveOpenTags($open_tags);
         $tagged_text .= $escape_text_tags ? strtr($text, ['<' => '\<']) : $text;
-        $tagged_text .= $this->resolveCloseTags($tags);
+        $tagged_text .= $this->resolveCloseTags($open_tags);
 
         return $tagged_text;
     }

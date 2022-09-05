@@ -45,7 +45,8 @@ class CliFormatter implements FormatterInterface
         'white' => '107',
     ];
 
-    static function format(TextElement $text, $previous_style = null){
+    static function format(TextElement $text, $previous_style = null): string
+    {
         $formatted = '';
         $style = self::makeStyleCode($text);
         if($style !== null){
@@ -71,7 +72,8 @@ class CliFormatter implements FormatterInterface
         return preg_replace('#\\033\[[0-9;]+m#','', $text);
     }
 
-    protected static function makeStyleCode(TextElement $text){
+    protected static function makeStyleCode(TextElement $text): ?string
+    {
         $format_codes = [];
         $text_color = $text->getColor();
         if($text_color !== null){
@@ -102,8 +104,7 @@ class CliFormatter implements FormatterInterface
             $format_codes[] = '7';
         }
 
-        $style_code = !empty($format_codes) ? "\033[".implode(';',$format_codes)."m" : null;
-        return $style_code;
+        return !empty($format_codes) ? "\033[".implode(';',$format_codes)."m" : null;
     }
 
     protected static function getTextColorMapping($color){

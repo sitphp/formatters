@@ -10,13 +10,13 @@
         }
     ],
     "require": {
-        "php": ">=7.1",
-        "sitphp/helpers": "1.2.*",
+        "php": ">=7.2",
+        "sitphp/helpers": "v1.3.*",
         "ext-dom": "*",
         "ext-mbstring": "*"
     },
     "require-dev": {
-        "gealex/doublit": "2.1.*"
+        "sitphp/doubles": "2.4.*.*"
     },
     "autoload": {
         "psr-4": {

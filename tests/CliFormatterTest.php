@@ -1,6 +1,6 @@
 <?php
 
-use Doublit\TestCase;
+use SitPHP\Doubles\TestCase;
 use SitPHP\Formatters\Formatters\CliFormatter;
 use SitPHP\Formatters\Formatter;
 use SitPHP\Formatters\FormatterManager;

@@ -2,7 +2,6 @@
 
 namespace SitPHP\Formatters;
 
-
 class TagStyle
 {
 

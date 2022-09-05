@@ -1,13 +1,13 @@
 <?php
 
-use Doublit\TestCase;
+use SitPHP\Doubles\TestCase;
 use SitPHP\Formatters\Formatters\CliFormatter;
 use SitPHP\Formatters\Formatters\FormatterInterface;
 use SitPHP\Formatters\Formatter;
 use SitPHP\Formatters\FormatterManager;
 use SitPHP\Formatters\TextElement;
 
-class ParserManagerTest extends TestCase
+class FormatterManagerTest extends TestCase
 {
     /*
      * Test formatter

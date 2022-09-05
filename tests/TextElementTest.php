@@ -1,6 +1,6 @@
 <?php
 
-use Doublit\TestCase;
+use SitPHP\Doubles\TestCase;
 use SitPHP\Formatters\TagStyle;
 use SitPHP\Formatters\TextElement;
 
