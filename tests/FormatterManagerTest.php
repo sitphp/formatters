@@ -46,7 +46,7 @@ class FormatterManagerTest extends TestCase
     function testFormatter()
     {
         $formatter_manager = new FormatterManager();
-        $formatter = $formatter_manager->formatter(ParserManagerTestFormatter::class);
+        $formatter = $formatter_manager->getFormatter(ParserManagerTestFormatter::class);
 
         $this->assertInstanceOf(Formatter::class, $formatter);
         $this->assertEquals(ParserManagerTestFormatter::class, $formatter->getFormatterClass());

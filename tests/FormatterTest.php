@@ -51,7 +51,7 @@ class FormatterTest extends TestCase
             ->count(1);
         $formatter_manager = new FormatterManager();
         $formatter_manager->setFormatter('my_formatter', $format_double);
-        $formatter = $formatter_manager->formatter('my_formatter');
+        $formatter = $formatter_manager->getFormatter('my_formatter');
         $this->assertEquals('formatted', $formatter->format('my <cs color="red">message</cs>'));
     }
 
@@ -63,7 +63,7 @@ class FormatterTest extends TestCase
             ->count(1);
         $formatter_manager = new FormatterManager();
         $formatter_manager->setFormatter('cli', $format_double);
-        $formatter = $formatter_manager->formatter('cli');
+        $formatter = $formatter_manager->getFormatter('cli');
         $this->assertEquals('formatted', $formatter->format('my <cs color="red">message</cs>', null, $format_double));
     }
 
@@ -71,7 +71,7 @@ class FormatterTest extends TestCase
     {
         $this->expectException(LogicException::class);
         $formatter_manager = new FormatterManager();
-        $formatter = $formatter_manager->formatter('undefined');
+        $formatter = $formatter_manager->getFormatter('undefined');
         $formatter->format('message');
     }
 
@@ -86,7 +86,7 @@ class FormatterTest extends TestCase
             ->count(1);
         $formatter_manager = new FormatterManager();
         $formatter_manager->setFormatter('my_formatter', $format_double);
-        $formatter = $formatter_manager->formatter('my_formatter');
+        $formatter = $formatter_manager->getFormatter('my_formatter');
         $this->assertEquals('unformatted', $formatter->unFormat('my <cs color="red">message</cs>'));
     }
 
@@ -98,7 +98,7 @@ class FormatterTest extends TestCase
             ->count(1);
         $formatter_manager = new FormatterManager();
         $formatter_manager->setFormatter('cli', $format_double);
-        $formatter = $formatter_manager->formatter('cli');
+        $formatter = $formatter_manager->getFormatter('cli');
         $this->assertEquals('unformatted', $formatter->unFormat('my <cs color="red">message</cs>', $format_double));
     }
 

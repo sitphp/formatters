@@ -5,10 +5,12 @@ namespace SitPHP\Formatters;
 use Exception;
 use LogicException;
 use SitPHP\Formatters\Formatters\CliFormatter;
+use SitPHP\Formatters\Formatters\TextFormatter;
 
 class FormatterManager
 {
 
+    private $formatter_classes = [];
     private $formatters = [];
 
     /**
@@ -19,20 +21,23 @@ class FormatterManager
     function __construct()
     {
         $this->setFormatter('cli', CliFormatter::class);
+        $this->setFormatter('text', TextFormatter::class);
     }
 
     /**
      * Return new formatter instance
      *
-     * @param string $formatter
+     * @param string $name
      * @return Formatter
      * @throws Exception
      * @throws Exception
      */
-    function formatter(string $formatter)
+    function getFormatter(string $name) : Formatter
     {
-        $style = new Formatter($this, $formatter);
-        return $style;
+        if(!isset($this->formatters[$name])){
+            $this->formatters[$name] = new Formatter($this, $name);
+        }
+        return $this->formatters[$name];
     }
 
     /**
@@ -44,11 +49,11 @@ class FormatterManager
      */
     function setFormatter(string $name, string $class)
     {
-        $existing_formatter = array_search($class, $this->formatters);
+        $existing_formatter = array_search($class, $this->formatter_classes);
         if ($existing_formatter && $existing_formatter != $name) {
             throw new LogicException('Formatter ' . $class . ' is already set with name "' . $name . '"');
         }
-        $this->formatters[$name] = $class;
+        $this->formatter_classes[$name] = $class;
     }
 
     /**
@@ -60,7 +65,7 @@ class FormatterManager
      */
     function getFormatterClass(string $name)
     {
-        return $this->formatters[$name] ?? null;
+        return $this->formatter_classes[$name] ?? null;
     }
 
     /**
@@ -72,5 +77,6 @@ class FormatterManager
     function removeFormatter(string $name)
     {
         unset($this->formatters[$name]);
+        unset($this->formatter_classes[$name]);
     }
 }

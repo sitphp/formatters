@@ -31,10 +31,10 @@ class Formatter
      */
     private $manager;
 
-    function __construct(FormatterManager $manager, string $formatter)
+    function __construct(FormatterManager $manager, string $name)
     {
         $this->manager = $manager;
-        $this->formatter = $this->validateFormatter($formatter);
+        $this->formatter = $this->validateFormatter($name);
     }
 
     /**
