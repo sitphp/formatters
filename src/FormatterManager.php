@@ -11,7 +11,6 @@ class FormatterManager
 {
 
     private $formatter_classes = [];
-    private $formatters = [];
 
     /**
      * Parser manager constructor
@@ -32,12 +31,9 @@ class FormatterManager
      * @throws Exception
      * @throws Exception
      */
-    function getFormatter(string $name) : Formatter
+    function createFormatter(string $name) : Formatter
     {
-        if(!isset($this->formatters[$name])){
-            $this->formatters[$name] = new Formatter($this, $name);
-        }
-        return $this->formatters[$name];
+        return new Formatter($this, $name);
     }
 
     /**
@@ -76,7 +72,6 @@ class FormatterManager
      */
     function removeFormatter(string $name)
     {
-        unset($this->formatters[$name]);
         unset($this->formatter_classes[$name]);
     }
 }
