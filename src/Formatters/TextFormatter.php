@@ -5,16 +5,24 @@ namespace SitPHP\Formatters\Formatters;
 
 use SitPHP\Formatters\TextElement;
 
-class TextFormatter implements FormatterInterface
+class TextFormatter extends Formatter
 {
 
-    static function format(TextElement $text)
+    /**
+     * @param TextElement $message
+     * @return string
+     */
+    function doFormat(TextElement $message): string
     {
-        return $text->getText();
+        return $message->getText();
     }
 
-    static function unFormat(string $text)
+    /**
+     * @param string $message
+     * @return string
+     */
+    function doUnFormat(string $message): string
     {
-        return $text;
+        return $message;
     }
 }

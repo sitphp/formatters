@@ -1,23 +1,26 @@
 <?php
 
-namespace SitPHP\Formatters;
+namespace SitPHP\Formatters\Formatters;
 
 use DOMDocument;
 use DOMElement;
 use DOMNamedNodeMap;
 use Exception;
 use InvalidArgumentException;
-use SitPHP\Formatters\Formatters\FormatterInterface;
+use SitPHP\Formatters\StyleTag;
+use SitPHP\Formatters\TextElement;
 
-class Formatter
+abstract class Formatter
 {
 
     /**
-     * @var FormatterInterface
+     * @var array
      */
-    private $formatter;
     private $tags_styles = [];
 
+    /**
+     * @var string[]
+     */
     private $style_methods_mapping = [
         'color' => 'setColor',
         'background-color' => 'setBackgroundColor',
@@ -27,24 +30,21 @@ class Formatter
         'highlight' => 'highlight'
     ];
     /**
-     * @var FormatterManager
+     * @var string
      */
-    private $manager;
-
-    function __construct(FormatterManager $manager, string $name)
-    {
-        $this->manager = $manager;
-        $this->formatter = $this->validateFormatter($name);
-    }
+    private $name;
 
     /**
-     * Return formatter
-     *
-     * @return FormatterInterface
+     * @param string|null $name
      */
-    function getFormatterClass()
+    function __construct(string $name = null)
     {
-        return $this->formatter;
+        $this->name = $name;
+    }
+
+    function getName(): ?string
+    {
+        return $this->name;
     }
 
     /*
@@ -55,12 +55,12 @@ class Formatter
      * Build a new style
      *
      * @param string $name
-     * @return TagStyle
+     * @return StyleTag
      * @throws Exception
      */
-    function buildTagStyle(string $name)
+    function buildTagStyle(string $name): StyleTag
     {
-        $style = new TagStyle();
+        $style = new StyleTag();
         $this->setTagStyle($name, $style);
         return $style;
     }
@@ -69,10 +69,10 @@ class Formatter
      * Set a built style
      *
      * @param $name
-     * @param TagStyle $style
+     * @param StyleTag $style
      * @throws Exception
      */
-    function setTagStyle($name, TagStyle $style)
+    function setTagStyle($name, StyleTag $style)
     {
         $this->tags_styles[$name] = $style;
     }
@@ -81,10 +81,10 @@ class Formatter
      * Return a built style
      *
      * @param string $name
-     * @return TagStyle
+     * @return StyleTag
      * @throws Exception
      */
-    function getTagStyle(string $name)
+    function getTagStyle(string $name): ?StyleTag
     {
         return $this->tags_styles[$name] ?? null;
     }
@@ -112,12 +112,20 @@ class Formatter
      * @return mixed
      * @throws Exception
      */
-    function format(string $message, int $width = null)
+    function format(string $message, int $width = null): string
     {
-        $formatter_class = $this->getFormatterClass();
         $parsed = $this->parse($message, $width);
-        return $formatter_class::format($parsed);
+        if ($parsed === null) {
+            return '';
+        }
+        return $this->doFormat($parsed);
     }
+
+    /**
+     * @param TextElement $message
+     * @return mixed
+     */
+    abstract protected function doFormat(TextElement $message);
 
     /**
      * UnFormat message
@@ -127,9 +135,14 @@ class Formatter
      */
     function unFormat(string $message)
     {
-        $formatter_class = $this->getFormatterClass();
-        return $formatter_class::unFormat($message);
+        return $this->doUnFormat($message);
     }
+
+    /**
+     * @param string $message
+     * @return string
+     */
+    abstract protected function doUnFormat(string $message): string;
 
     /**
      * @param string $message
@@ -150,11 +163,11 @@ class Formatter
      * Remove string tags and optionally split to width
      *
      * @param string $text
-     * @param int $width
+     * @param int|null $width
      * @return string|null
      * @throws Exception
      */
-    function plain(string $text, int $width = null)
+    function plain(string $text, int $width = null): ?string
     {
         return $this->parse($text, $width)->getText();
     }
@@ -167,18 +180,16 @@ class Formatter
      * @return TextElement
      * @throws Exception
      */
-    function parse(string $text, int $width = null)
+    function parse(string $text, int $width = null): ?TextElement
     {
         $prepared_text = $this->split($text, $width);
         $dom = new DOMDocument();
-        // Should never happen
         try {
             $dom->loadXML('<node>' . $prepared_text . '</node>');
         } catch (Exception $e) {
             throw new InvalidArgumentException('Text "' . $text . '" could not be parsed : text should be in XML format');
         }
-        $text = $this->domToOutputText($dom->documentElement);
-        return $text;
+        return $this->domToOutputText($dom->documentElement);
     }
 
     /**
@@ -337,7 +348,13 @@ class Formatter
         return $splitted;
     }
 
-    protected function mb_chunk_split(string $string, int $chunklen = 76, $end = PHP_EOL)
+    /**
+     * @param string $string
+     * @param int $chunklen
+     * @param $end
+     * @return string
+     */
+    protected function mb_chunk_split(string $string, int $chunklen = 76, $end = PHP_EOL): string
     {
         if ($chunklen <= 0) {
             return $string;
@@ -360,7 +377,7 @@ class Formatter
      * @return TextElement
      * @throws Exception
      */
-    protected function domToOutputText(DOMElement $dom, TextElement $text_el = null)
+    protected function domToOutputText(DOMElement $dom, TextElement $text_el = null): ?TextElement
     {
         if (!isset($text_el)) {
             $text_el = new TextElement();
@@ -399,26 +416,6 @@ class Formatter
 
     }
 
-    /**
-     * Validate formatter
-     *
-     * @param $formatter
-     * @return mixed
-     * @throws Exception
-     */
-    protected function validateFormatter($formatter)
-    {
-        if (null !== $this->manager->getFormatterClass($formatter)) {
-            $formatter = $this->manager->getFormatterClass($formatter);
-        }
-        if (!class_exists($formatter)) {
-            throw new InvalidArgumentException('Invalid formatter "' . $formatter . '" : expected formatter name or formatter class');
-        }
-        if (!is_subclass_of($formatter, FormatterInterface::class)) {
-            throw new InvalidArgumentException('Invalid formatter class "' . $formatter . '" : expected subclass of ' . FormatterInterface::class);
-        }
-        return $formatter;
-    }
 
     /**
      * @param TextElement $text
@@ -433,6 +430,11 @@ class Formatter
         $this->applyArrayAttributes($text, $attributes);
     }
 
+    /**
+     * @param TextElement $styled_text
+     * @param array $style
+     * @return void
+     */
     protected function applyArrayAttributes(TextElement $styled_text, array $style)
     {
         foreach ($style as $key => $value) {
@@ -454,6 +456,12 @@ class Formatter
         }
     }
 
+    /**
+     * @param $styled_text
+     * @param $key
+     * @param $value
+     * @return void
+     */
     protected function applyStyleItem($styled_text, $key, $value)
     {
         if (!isset($this->style_methods_mapping[$key])) {
@@ -470,7 +478,7 @@ class Formatter
      * @param array $tags
      * @return string
      */
-    protected function resolveOpenTags(array $tags)
+    protected function resolveOpenTags(array $tags): string
     {
         $open_tags = '';
         foreach ($tags as $tag) {
@@ -489,7 +497,7 @@ class Formatter
      * @param array $tags
      * @return string
      */
-    protected function resolveCloseTags(array $tags)
+    protected function resolveCloseTags(array $tags): string
     {
         $close_tags = '';
         foreach (array_reverse($tags) as $tag) {
@@ -506,7 +514,7 @@ class Formatter
      * @param bool $escape_text_tags
      * @return string
      */
-    protected function wrapTextWithTags(string $text, array $open_tags, bool $escape_text_tags = false)
+    protected function wrapTextWithTags(string $text, array $open_tags, bool $escape_text_tags = false): string
     {
         $tagged_text = $this->resolveOpenTags($open_tags);
         $tagged_text .= $escape_text_tags ? strtr($text, ['<' => '\<']) : $text;

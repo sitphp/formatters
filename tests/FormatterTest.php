@@ -3,76 +3,36 @@
 namespace SitPHP\Formatters\Tests;
 
 use InvalidArgumentException;
-use LogicException;
 use SitPHP\Doubles\Double;
 use SitPHP\Doubles\TestCase;
-use SitPHP\Formatters\Formatter;
-use SitPHP\Formatters\FormatterManager;
+use SitPHP\Formatters\Formatters\Formatter;
 use SitPHP\Formatters\Formatters\CliFormatter;
-use SitPHP\Formatters\Formatters\FormatterInterface;
-use SitPHP\Formatters\TagStyle;
+use SitPHP\Formatters\StyleTag;
 use SitPHP\Formatters\TextElement;
 
 class FormatterTest extends TestCase
 {
     /*
-     * Test get/set formatter
-     */
-
-    function testGetSetFormatter()
-    {
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, ParserTestFormatter::class);
-        $this->assertEquals(ParserTestFormatter::class, $formatter->getFormatterClass());
-    }
-
-    function testSetUndefinedFormatterShouldFail()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'undefined');
-    }
-
-    function testSetInvalidFormatterShouldFail()
-    {
-        $this->expectException(InvalidArgumentException::class);
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, __CLASS__);
-    }
-
-    /*
      * Test format
      */
     function testFormat()
     {
-        $format_double = Double::dummy(CliFormatter::class)->getClass();
-        $format_double::_method('format')
+        $formatter_double = Double::dummy(CliFormatter::class)->getClass();
+        $formatter_double::_method('format')
             ->return('formatted')
             ->count(1);
-        $formatter_manager = new FormatterManager();
-        $formatter_manager->setFormatter('my_formatter', $format_double);
-        $formatter = $formatter_manager->createFormatter('my_formatter');
+        $formatter = new $formatter_double();
         $this->assertEquals('formatted', $formatter->format('my <cs color="red">message</cs>'));
     }
 
     function testFormatWithFormatter()
     {
-        $format_double = Double::dummy(CliFormatter::class)->getClass();
-        $format_double::_method('format')
+        $formatter_double = Double::dummy(CliFormatter::class)->getClass();
+        $formatter_double::_method('format')
             ->return('formatted')
             ->count(1);
-        $formatter_manager = new FormatterManager();
-        $formatter_manager->setFormatter('cli', $format_double);
-        $formatter = $formatter_manager->createFormatter('cli');
-        $this->assertEquals('formatted', $formatter->format('my <cs color="red">message</cs>', null, $format_double));
-    }
-
-    function testFormatWithUndefinedFormatterShouldFail()
-    {
-        $this->expectException(LogicException::class);
-        $formatter_manager = new FormatterManager();
-        $formatter = $formatter_manager->createFormatter('undefined');
-        $formatter->format('message');
+        $formatter = new $formatter_double();
+        $this->assertEquals('formatted', $formatter->format('my <cs color="red">message</cs>', null, $formatter_double));
     }
 
     /*
@@ -80,34 +40,22 @@ class FormatterTest extends TestCase
      */
     function testUnFormat()
     {
-        $format_double = Double::dummy(CliFormatter::class)->getClass();
-        $format_double::_method('unFormat')
+        $formatter_double = Double::dummy(CliFormatter::class)->getClass();
+        $formatter_double::_method('unFormat')
             ->return('unformatted')
             ->count(1);
-        $formatter_manager = new FormatterManager();
-        $formatter_manager->setFormatter('my_formatter', $format_double);
-        $formatter = $formatter_manager->createFormatter('my_formatter');
+        $formatter = new $formatter_double();
         $this->assertEquals('unformatted', $formatter->unFormat('my <cs color="red">message</cs>'));
     }
 
     function testUnFormatWithFormatter()
     {
-        $format_double = Double::dummy(CliFormatter::class)->getClass();
-        $format_double::_method('unFormat')
+        $formatter_double = Double::dummy(CliFormatter::class)->getClass();
+        $formatter_double::_method('unFormat')
             ->return('unformatted')
             ->count(1);
-        $formatter_manager = new FormatterManager();
-        $formatter_manager->setFormatter('cli', $format_double);
-        $formatter = $formatter_manager->createFormatter('cli');
-        $this->assertEquals('unformatted', $formatter->unFormat('my <cs color="red">message</cs>', $format_double));
-    }
-
-    function testUnFormatWithUndefinedFormatterShouldFail()
-    {
-        $this->expectException(LogicException::class);
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'undefined');
-        $formatter->unFormat('message');
+        $formatter = new $formatter_double();
+        $this->assertEquals('unformatted', $formatter->unFormat('my <cs color="red">message</cs>', $formatter_double));
     }
 
 
@@ -116,17 +64,15 @@ class FormatterTest extends TestCase
      */
     function testGetTagStyle()
     {
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
+        $formatter = new CliFormatter();
         $formatter->buildTagStyle('info')->setColor('blue');
-        $this->assertInstanceOf(TagStyle::class, $formatter->getTagStyle('info'));
+        $this->assertInstanceOf(StyleTag::class, $formatter->getTagStyle('info'));
         $this->assertEquals('blue', $formatter->getTagStyle('info')->getColor());
     }
 
     function testRemoveTagStyle()
     {
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
+        $formatter = new CliFormatter();
         $formatter->buildTagStyle('info')->setColor('blue');
         $formatter->removeTagStyle('info');
         $this->assertNull($formatter->getTagStyle('info'));
@@ -138,15 +84,13 @@ class FormatterTest extends TestCase
      */
     function testParseShouldReturnTextElement()
     {
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
+        $formatter = new CliFormatter();
         $this->assertInstanceOf(TextElement::class, $formatter->parse('my text'));
     }
 
     function testParseShouldUnderstandCsTags()
     {
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
+        $formatter = new CliFormatter();
         $text = $formatter->parse('my <cs>text</cs>');
         $content = $text->getContent();
         $this->assertEquals('my ', $content[0]);
@@ -156,8 +100,7 @@ class FormatterTest extends TestCase
 
     function testParseShouldUnderstandStyleTags()
     {
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
+        $formatter = new CliFormatter();
         $formatter->buildTagStyle('warning');
         $text = $formatter->parse('my <warning>text</warning>');
         $content = $text->getContent();
@@ -168,8 +111,7 @@ class FormatterTest extends TestCase
 
     function testParseShouldIgnoreUndefinedTags()
     {
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
+        $formatter = new CliFormatter();
         $text = $formatter->parse('my <undefined>text</undefined>');
         $content = $text->getText();
         $this->assertEquals('my <undefined>text</undefined>', $content);
@@ -177,8 +119,7 @@ class FormatterTest extends TestCase
 
     function testParseShouldApplyCsStyle()
     {
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
+        $formatter = new CliFormatter();
         $text = $formatter->parse('my <cs color="red" background-color="blue" bold="true" underline="true" blink="true" highlight="true">text</cs>');
 
         /** @var TextElement $content_1 */
@@ -194,8 +135,7 @@ class FormatterTest extends TestCase
 
     function testParseShouldApplyCsStyleAttribute()
     {
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
+        $formatter = new CliFormatter();
         $text = $formatter->parse('my <cs style="color:red;background-color:blue;bold;underline;blink;highlight">text</cs>');
         /** @var TextElement $content_1 */
         $content_1 = $text->getContent()[1];
@@ -210,15 +150,13 @@ class FormatterTest extends TestCase
     function testParseWithUndefinedStyleAttributeShouldFail()
     {
         $this->expectException(InvalidArgumentException::class);
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
+        $formatter = new CliFormatter();
         $formatter->parse('my <cs undefined="undefined">text</cs>');
     }
 
     function testParseWithEmptyAttributeShouldBeIgnored()
     {
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
+        $formatter = new CliFormatter();
         $parsed = $formatter->parse('my <cs color="">message</cs>');
         /** @var TextElement $content_1 */
         $content_1 = $parsed->getContent()[1];
@@ -227,8 +165,7 @@ class FormatterTest extends TestCase
 
     function testEscapedTagsShouldBeIgnored()
     {
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
+        $formatter = new CliFormatter();
         $parsed = $formatter->parse('my <cs color="red">me\<cs>ssage</cs>');
         $this->assertEquals('my me<cs>ssage', $parsed->getText());
     }
@@ -236,8 +173,7 @@ class FormatterTest extends TestCase
     function testParseInvalidMessageShouldFail()
     {
         $this->expectException(InvalidArgumentException::class);
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
+        $formatter = new CliFormatter();
         $formatter->parse('my [31mmessage [0m[31m[34;41;1;4;5;7mstyle[0m[31m[0m[31m[0m');
     }
 
@@ -246,23 +182,20 @@ class FormatterTest extends TestCase
      */
     function testPlain()
     {
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
+        $formatter = new CliFormatter();
         $formatter->buildTagStyle('warning');
         $this->assertEquals('my text with warning and <undefined>undefined</undefined>', $formatter->plain('my <cs color="red">text</cs> with <warning>warning</warning> and <undefined>undefined</undefined>'));
     }
 
     function testPlainWidth()
     {
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
+        $formatter = new CliFormatter();
         $this->assertEquals('my text' . PHP_EOL . ' with w' . PHP_EOL . 'idth', $formatter->plain('my <cs color="red">text</cs> with width', 7));
     }
 
     function testPlainZeroNegativeWidth()
     {
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
+        $formatter = new CliFormatter();
         $text = '<cs color="blue">message</cs>';
         $this->assertEquals('message', $formatter->plain($text, 0));
         $this->assertEquals('message', $formatter->plain($text, -3));
@@ -273,23 +206,20 @@ class FormatterTest extends TestCase
      */
     function testRaw()
     {
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
+        $formatter = new CliFormatter();
         $text = '<cs color="blue"></cs>';
         $this->assertEquals($text, $formatter->raw($text));
     }
 
     function testRawWidth()
     {
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
+        $formatter = new CliFormatter();
         $this->assertEquals('<cs color=' . PHP_EOL . '"blue">hel' . PHP_EOL . 'lo</cs>', $formatter->raw('<cs color="blue">hello</cs>', 10));
     }
 
     function testRawZeroNegativeWidth()
     {
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
+        $formatter = new CliFormatter();
         $text = '<cs color="blue"></cs>';
         $this->assertEquals($text, $formatter->raw($text, -3));
         $this->assertEquals($text, $formatter->raw($text, 0));
@@ -300,8 +230,7 @@ class FormatterTest extends TestCase
      */
     function testSplitWithoutChanges()
     {
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
+        $formatter = new CliFormatter();
         $message_1 = 'my <cs color="red" style="bold">message</cs>';
         $message_2 = 'my message';
         $this->assertEquals($message_1, $formatter->split($message_1));
@@ -310,8 +239,7 @@ class FormatterTest extends TestCase
 
     function testSplitWidth()
     {
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
+        $formatter = new CliFormatter();
         $message = 'my <cs color="red" style="bold">message</cs>';
         $expected = 'my <cs color="red" style="bold">mes</cs>' . "\n" . '<cs color="red" style="bold">sage</cs>';
 
@@ -320,16 +248,14 @@ class FormatterTest extends TestCase
 
     function testSplitWithZeroWidth()
     {
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
+        $formatter = new CliFormatter();
         $message = 'my <cs color="red" style="bold">message</cs>';
         $this->assertEquals($message, $formatter->split($message, 0));
     }
 
     function testSplitShouldRespectLineBreaks()
     {
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
+        $formatter = new CliFormatter();
         $message_1 = "my \n<cs color='red' style='bold'>message</cs>";
         $expected_1 = "my \n<cs color='red' style='bold'>mes</cs>\n<cs color='red' style='bold'>sag</cs>\n<cs color='red' style='bold'>e</cs>";
         $message_2 = "my <cs color='red' style='bold'>mess\nage</cs>";
@@ -357,23 +283,22 @@ class FormatterTest extends TestCase
 
     function testSplitWithPreserveEscapedTags()
     {
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
+        $formatter = new CliFormatter();
         $this->assertEquals('<cs>message with \<error></cs>' . PHP_EOL . '<cs>escape\</error> tag</cs>', $formatter->split('<cs>message with \<error>escape\</error> tag</cs>', 20, false, true));
     }
 
 }
 
-class ParserTestFormatter implements FormatterInterface
+class ParserTestFormatter extends Formatter
 {
 
-    static function format(TextElement $text)
+    function doFormat(TextElement $message): string
     {
-        // TODO: Implement format() method.
+        return '';
     }
 
-    static function unFormat(string $text)
+    function doUnFormat(string $message): string
     {
-        // TODO: Implement removeFormatting() method.
+        return '';
     }
 }

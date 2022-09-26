@@ -4,8 +4,6 @@ namespace SitPHP\Formatters\Tests;
 
 use InvalidArgumentException;
 use SitPHP\Doubles\TestCase;
-use SitPHP\Formatters\Formatter;
-use SitPHP\Formatters\FormatterManager;
 use SitPHP\Formatters\Formatters\CliFormatter;
 
 class CliFormatterTest extends TestCase
@@ -16,36 +14,36 @@ class CliFormatterTest extends TestCase
      */
     function testFormat()
     {
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
-        $parsed = $formatter->parse('my <cs color="red">message <cs color="blue" background-color="red" bold="true" blink="true" highlight="true" underline="true">style</cs></cs>');
-        $this->assertEquals('my [31mmessage [0m[31m[34;41;1;4;5;7mstyle[0m[31m[0m[31m[0m', CliFormatter::format($parsed));
+        $formatter = new CliFormatter();
+        $message = 'my <cs color="red">message <cs color="blue" background-color="red" bold="true" blink="true" highlight="true" underline="true">style</cs></cs>';
+        $this->assertEquals('my [31mmessage [0m[31m[34;41;1;4;5;7mstyle[0m[31m[0m[31m[0m', $formatter->format($message));
     }
 
     function testFormatWithInt()
     {
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
-        $parsed = $formatter->parse('my <cs color="31">message <cs color="34" background-color="41" bold="true" blink="true" highlight="true" underline="true">style</cs></cs>');
-        $this->assertEquals('my [31mmessage [0m[31m[34;41;1;4;5;7mstyle[0m[31m[0m[31m[0m', CliFormatter::format($parsed));
+        $formatter = new CliFormatter();
+        $message = 'my <cs color="31">message <cs color="34" background-color="41" bold="true" blink="true" highlight="true" underline="true">style</cs></cs>';
+        $this->assertEquals('my [31mmessage [0m[31m[34;41;1;4;5;7mstyle[0m[31m[0m[31m[0m', $formatter->format($message));
+    }
+
+    function testFormatWithHex(){
+        $formatter = new CliFormatter();
+        $message = 'my <cs color="31">message <cs color="#ffffff" background-color="#999999">style</cs></cs>';
+        $this->assertEquals('my [31mmessage [0m[31m[38;2;255;255;255;48;2;153;153;153mstyle[0m[31m[0m[31m[0m', $formatter->format($message));
     }
 
     function testFormatWithUndefinedColorShouldFail()
     {
         $this->expectException(InvalidArgumentException::class);
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
-        $parsed = $formatter->parse('my <cs color="undefined">message</cs>');
-        CliFormatter::format($parsed);
+        $formatter = new CliFormatter();
+        $formatter->format('my <cs color="undefined">message</cs>');
     }
 
-    function testFormatWithBackgroundColorShouldFail()
+    function testFormatWithBackgroundColor()
     {
         $this->expectException(InvalidArgumentException::class);
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
-        $parsed = $formatter->parse('my <cs background-color="undefined">message</cs>');
-        CliFormatter::format($parsed);
+        $formatter = new CliFormatter();
+        $formatter->format('my <cs background-color="undefined">message</cs>');
     }
 
     /*
@@ -53,9 +51,8 @@ class CliFormatterTest extends TestCase
      */
     function testRemoveFormatting()
     {
-        $formatter_manager = new FormatterManager();
-        $formatter = new Formatter($formatter_manager, 'cli');
-        $parsed = $formatter->parse('my <cs color="red">message <cs color="blue" background-color="red" bold="true" blink="true" highlight="true" underline="true">style</cs></cs>');
-        $this->assertEquals('my message style', CliFormatter::unFormat(CliFormatter::format($parsed)));
+        $formatter = new CliFormatter();
+        $message = 'my <cs color="red">message <cs color="blue" background-color="red" bold="true" blink="true" highlight="true" underline="true">style</cs></cs>';
+        $this->assertEquals('my message style', $formatter->unFormat($formatter->format($message)));
     }
 }

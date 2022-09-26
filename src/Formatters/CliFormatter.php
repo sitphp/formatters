@@ -5,8 +5,11 @@ namespace SitPHP\Formatters\Formatters;
 use InvalidArgumentException;
 use SitPHP\Formatters\TextElement;
 
-class CliFormatter implements FormatterInterface
+class CliFormatter extends Formatter
 {
+    /**
+     * @var string[]
+     */
     static $text_colors = [
         'black' => '30',
         'red' => '31',
@@ -26,6 +29,9 @@ class CliFormatter implements FormatterInterface
         'white' => '97',
     ];
 
+    /**
+     * @var string[]
+     */
     static $background_colors = [
         'black' => '40',
         'red' => '41',
@@ -45,18 +51,24 @@ class CliFormatter implements FormatterInterface
         'white' => '107',
     ];
 
-    static function format(TextElement $text, $previous_style = null): string
+    /**
+     * @param TextElement $message
+     * @param $previous_style
+     * @return string
+     * @throws \Exception
+     */
+    function doFormat(TextElement $message, $previous_style = null): string
     {
         $formatted = '';
-        $style = self::makeStyleCode($text);
+        $style = self::makeStyleCode($message);
         if ($style !== null) {
             $formatted .= $style;
         }
-        foreach ($text->getContent() as $item) {
+        foreach ($message->getContent() as $item) {
             if (is_string($item)) {
                 $formatted .= $item;
             } else {
-                $formatted .= self::format($item, $style);
+                $formatted .= $this->doFormat($item, $style);
             }
         }
         if ($style !== null) {
@@ -68,11 +80,19 @@ class CliFormatter implements FormatterInterface
         return $formatted;
     }
 
-    static function unFormat(string $text)
+    /**
+     * @param string $message
+     * @return string
+     */
+    function doUnFormat(string $message): string
     {
-        return preg_replace('#\\033\[[0-9;]+m#', '', $text);
+        return preg_replace('#\\033\[[0-9;]+m#', '', $message);
     }
 
+    /**
+     * @param TextElement $text
+     * @return string|null
+     */
     protected static function makeStyleCode(TextElement $text): ?string
     {
         $format_codes = [];
@@ -84,6 +104,7 @@ class CliFormatter implements FormatterInterface
             }
             $format_codes[] = $color_code;
         }
+
         $background_color = $text->getBackgroundColor();
         if ($background_color !== null) {
             $color_code = self::getBackgroundColorMapping($background_color);
@@ -92,6 +113,7 @@ class CliFormatter implements FormatterInterface
             }
             $format_codes[] = $color_code;
         }
+
         if ($text->isBold()) {
             $format_codes[] = '1';
         }
@@ -108,19 +130,48 @@ class CliFormatter implements FormatterInterface
         return !empty($format_codes) ? "\033[" . implode(';', $format_codes) . "m" : null;
     }
 
+    /**
+     * @param $color
+     * @return mixed|string|null
+     */
     protected static function getTextColorMapping($color)
     {
+        if ($color[0] == '#') {
+            list($r, $g, $b) = self::hexToRGB($color);
+            return '38;2;' . $r . ';' . $g . ';' . $b;
+        }
         if (filter_var($color, FILTER_VALIDATE_INT)) {
             return in_array($color, self::$text_colors) ? $color : null;
         }
         return self::$text_colors[$color] ?? null;
     }
 
+    /**
+     * @param $color
+     * @return mixed|string|null
+     */
     protected static function getBackgroundColorMapping($color)
     {
+        if ($color[0] == '#') {
+            list($r, $g, $b) = self::hexToRGB($color);
+            return '48;2;' . $r . ';' . $g . ';' . $b;
+        }
         if (filter_var($color, FILTER_VALIDATE_INT)) {
             return in_array($color, self::$background_colors) ? $color : null;
         }
         return self::$background_colors[$color] ?? null;
+    }
+
+    /**
+     * @param string $color
+     * @return array
+     */
+    protected static function hexToRGB(string $color): array
+    {
+        $r = hexdec(substr($color, 1, 2));
+        $g = hexdec(substr($color, 3, 2));
+        $b = hexdec(substr($color, 5, ));
+
+        return [$r, $g, $b];
     }
 }

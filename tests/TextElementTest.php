@@ -4,7 +4,7 @@ namespace SitPHP\Formatters\Tests;
 
 
 use SitPHP\Doubles\TestCase;
-use SitPHP\Formatters\TagStyle;
+use SitPHP\Formatters\StyleTag;
 use SitPHP\Formatters\TextElement;
 
 class TextElementTest extends TestCase
@@ -55,7 +55,7 @@ class TextElementTest extends TestCase
     function testGetStyleShouldReturnInstanceOfStyle()
     {
         $text_el = new TextElement('message');
-        $this->assertInstanceOf(TagStyle::class, $text_el->getStyle());
+        $this->assertInstanceOf(StyleTag::class, $text_el->getStyle());
     }
 
     function testStyleShouldBeApplied()
