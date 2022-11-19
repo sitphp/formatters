@@ -5,8 +5,8 @@ namespace SitPHP\Formatters\Tests;
 use InvalidArgumentException;
 use SitPHP\Doubles\Double;
 use SitPHP\Doubles\TestCase;
-use SitPHP\Formatters\Formatters\Formatter;
 use SitPHP\Formatters\Formatters\CliFormatter;
+use SitPHP\Formatters\Formatters\Formatter;
 use SitPHP\Formatters\StyleTag;
 use SitPHP\Formatters\TextElement;
 
@@ -178,54 +178,6 @@ class FormatterTest extends TestCase
     }
 
     /*
-     * Test plain
-     */
-    function testPlain()
-    {
-        $formatter = new CliFormatter();
-        $formatter->buildTagStyle('warning');
-        $this->assertEquals('my text with warning and <undefined>undefined</undefined>', $formatter->plain('my <cs color="red">text</cs> with <warning>warning</warning> and <undefined>undefined</undefined>'));
-    }
-
-    function testPlainWidth()
-    {
-        $formatter = new CliFormatter();
-        $this->assertEquals('my text' . PHP_EOL . ' with w' . PHP_EOL . 'idth', $formatter->plain('my <cs color="red">text</cs> with width', 7));
-    }
-
-    function testPlainZeroNegativeWidth()
-    {
-        $formatter = new CliFormatter();
-        $text = '<cs color="blue">message</cs>';
-        $this->assertEquals('message', $formatter->plain($text, 0));
-        $this->assertEquals('message', $formatter->plain($text, -3));
-    }
-
-    /*
-     * Test raw
-     */
-    function testRaw()
-    {
-        $formatter = new CliFormatter();
-        $text = '<cs color="blue"></cs>';
-        $this->assertEquals($text, $formatter->raw($text));
-    }
-
-    function testRawWidth()
-    {
-        $formatter = new CliFormatter();
-        $this->assertEquals('<cs color=' . PHP_EOL . '"blue">hel' . PHP_EOL . 'lo</cs>', $formatter->raw('<cs color="blue">hello</cs>', 10));
-    }
-
-    function testRawZeroNegativeWidth()
-    {
-        $formatter = new CliFormatter();
-        $text = '<cs color="blue"></cs>';
-        $this->assertEquals($text, $formatter->raw($text, -3));
-        $this->assertEquals($text, $formatter->raw($text, 0));
-    }
-
-    /*
      * Test split
      */
     function testSplitWithoutChanges()
@@ -292,12 +244,12 @@ class FormatterTest extends TestCase
 class ParserTestFormatter extends Formatter
 {
 
-    function doFormat(TextElement $message): string
+    function format(string $message, int $width = null): string
     {
         return '';
     }
 
-    function doUnFormat(string $message): string
+    function unFormat(string $message): string
     {
         return '';
     }

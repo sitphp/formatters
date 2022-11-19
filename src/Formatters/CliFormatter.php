@@ -2,6 +2,7 @@
 
 namespace SitPHP\Formatters\Formatters;
 
+use Exception;
 use InvalidArgumentException;
 use SitPHP\Formatters\TextElement;
 
@@ -10,7 +11,7 @@ class CliFormatter extends Formatter
     /**
      * @var string[]
      */
-    static $text_colors = [
+    static array $text_colors = [
         'black' => '30',
         'red' => '31',
         'green' => '32',
@@ -32,7 +33,7 @@ class CliFormatter extends Formatter
     /**
      * @var string[]
      */
-    static $background_colors = [
+    static array $background_colors = [
         'black' => '40',
         'red' => '41',
         'green' => '42',
@@ -51,13 +52,23 @@ class CliFormatter extends Formatter
         'white' => '107',
     ];
 
+
+    function format(string $message, int $width = null): string
+    {
+        $parsed = $this->parse($message, $width);
+        if ($parsed === null) {
+            return '';
+        }
+        return $this->doFormat($parsed);
+    }
+
     /**
      * @param TextElement $message
      * @param $previous_style
      * @return string
-     * @throws \Exception
+     * @throws Exception
      */
-    function doFormat(TextElement $message, $previous_style = null): string
+    protected function doFormat(TextElement $message, $previous_style = null): string
     {
         $formatted = '';
         $style = self::makeStyleCode($message);
@@ -84,7 +95,7 @@ class CliFormatter extends Formatter
      * @param string $message
      * @return string
      */
-    function doUnFormat(string $message): string
+    function unFormat(string $message): string
     {
         return preg_replace('#\\033\[[0-9;]+m#', '', $message);
     }
@@ -132,9 +143,9 @@ class CliFormatter extends Formatter
 
     /**
      * @param $color
-     * @return mixed|string|null
+     * @return string|null
      */
-    protected static function getTextColorMapping($color)
+    protected static function getTextColorMapping($color): ?string
     {
         if ($color[0] == '#') {
             list($r, $g, $b) = self::hexToRGB($color);
@@ -148,9 +159,9 @@ class CliFormatter extends Formatter
 
     /**
      * @param $color
-     * @return mixed|string|null
+     * @return string|null
      */
-    protected static function getBackgroundColorMapping($color)
+    protected static function getBackgroundColorMapping($color): ?string
     {
         if ($color[0] == '#') {
             list($r, $g, $b) = self::hexToRGB($color);
@@ -170,7 +181,7 @@ class CliFormatter extends Formatter
     {
         $r = hexdec(substr($color, 1, 2));
         $g = hexdec(substr($color, 3, 2));
-        $b = hexdec(substr($color, 5, ));
+        $b = hexdec(substr($color, 5));
 
         return [$r, $g, $b];
     }

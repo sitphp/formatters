@@ -10,13 +10,13 @@
     }
   ],
   "require": {
-    "php": ">=7.2",
+    "php": ">=7.4",
     "sitphp/helpers": "v1.4.*",
     "ext-dom": "*",
     "ext-mbstring": "*"
   },
   "require-dev": {
-    "sitphp/doubles": "v2.4.*"
+    "sitphp/doubles": "~v2.4.5"
   },
   "autoload": {
     "psr-4": {

@@ -9,11 +9,11 @@ class TextElement
     /**
      * @var StyleTag
      */
-    private $style;
+    private StyleTag $style;
     /**
      * @var array
      */
-    private $content = [];
+    private array $content = [];
 
     /**
      * @param $content
@@ -35,7 +35,7 @@ class TextElement
      * @param $content
      * @return void
      */
-    function addContent($content)
+    function addContent($content): void
     {
         if (!is_string($content) && !is_a($content, self::class)) {
             throw new InvalidArgumentException('Invalid $content type : expected string or instance of ' . self::class);
@@ -47,7 +47,7 @@ class TextElement
      * @param array $content
      * @return void
      */
-    function setContent(array $content)
+    function setContent(array $content): void
     {
         $this->content = [];
         foreach ($content as $item) {
@@ -109,9 +109,9 @@ class TextElement
     }
 
     /**
-     * @return mixed
+     * @return string|null
      */
-    function getColor()
+    function getColor(): ?string
     {
         return $this->style->getColor();
     }
@@ -127,9 +127,9 @@ class TextElement
     }
 
     /**
-     * @return mixed
+     * @return string|null
      */
-    function getBackgroundColor()
+    function getBackgroundColor(): ?string
     {
         return $this->style->getBackgroundColor();
     }

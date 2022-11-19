@@ -16,12 +16,12 @@ abstract class Formatter
     /**
      * @var array
      */
-    private $tags_styles = [];
+    private array $tags_styles = [];
 
     /**
      * @var string[]
      */
-    private $style_methods_mapping = [
+    private array $style_methods_mapping = [
         'color' => 'setColor',
         'background-color' => 'setBackgroundColor',
         'bold' => 'bold',
@@ -30,9 +30,9 @@ abstract class Formatter
         'highlight' => 'highlight'
     ];
     /**
-     * @var string
+     * @var string|null
      */
-    private $name;
+    private ?string $name;
 
     /**
      * @param string|null $name
@@ -72,7 +72,7 @@ abstract class Formatter
      * @param StyleTag $style
      * @throws Exception
      */
-    function setTagStyle($name, StyleTag $style)
+    function setTagStyle($name, StyleTag $style): void
     {
         $this->tags_styles[$name] = $style;
     }
@@ -81,8 +81,7 @@ abstract class Formatter
      * Return a built style
      *
      * @param string $name
-     * @return StyleTag
-     * @throws Exception
+     * @return StyleTag|null
      */
     function getTagStyle(string $name): ?StyleTag
     {
@@ -94,7 +93,7 @@ abstract class Formatter
      *
      * @param string $name
      */
-    function removeTagStyle(string $name)
+    function removeTagStyle(string $name): void
     {
         unset($this->tags_styles[$name]);
     }
@@ -112,20 +111,8 @@ abstract class Formatter
      * @return mixed
      * @throws Exception
      */
-    function format(string $message, int $width = null): string
-    {
-        $parsed = $this->parse($message, $width);
-        if ($parsed === null) {
-            return '';
-        }
-        return $this->doFormat($parsed);
-    }
+    abstract function format(string $message, int $width = null): string;
 
-    /**
-     * @param TextElement $message
-     * @return mixed
-     */
-    abstract protected function doFormat(TextElement $message);
 
     /**
      * UnFormat message
@@ -133,51 +120,15 @@ abstract class Formatter
      * @param string $message
      * @return mixed
      */
-    function unFormat(string $message)
-    {
-        return $this->doUnFormat($message);
-    }
+    abstract function unFormat(string $message): string;
 
-    /**
-     * @param string $message
-     * @return string
-     */
-    abstract protected function doUnFormat(string $message): string;
-
-    /**
-     * @param string $message
-     * @param int $width
-     * @return string
-     * @throws Exception
-     */
-    function raw(string $message, int $width = null)
-    {
-        if (null === $width) {
-            return $message;
-        }
-        return $this->mb_chunk_split($message, $width);
-    }
-
-
-    /**
-     * Remove string tags and optionally split to width
-     *
-     * @param string $text
-     * @param int|null $width
-     * @return string|null
-     * @throws Exception
-     */
-    function plain(string $text, int $width = null): ?string
-    {
-        return $this->parse($text, $width)->getText();
-    }
 
     /**
      * Parse a text to an TextElement object
      *
      * @param string $text
      * @param int|null $width
-     * @return TextElement
+     * @return TextElement|null
      * @throws Exception
      */
     function parse(string $text, int $width = null): ?TextElement
@@ -256,9 +207,10 @@ abstract class Formatter
      * @param array $opened_tags
      * @param int|null $width
      * @param bool $encode_special_chars
-     * @return bool|string
+     * @param bool $preserve_escaped_tags
+     * @return string
      */
-    protected function splitText(string $text, &$current_line_char_count, array $opened_tags = [], int $width = null, bool $encode_special_chars = true, bool $preserve_escaped_tags = false)
+    protected function splitText(string $text, &$current_line_char_count, array $opened_tags = [], int $width = null, bool $encode_special_chars = true, bool $preserve_escaped_tags = false): string
     {
         $text = strtr($text, ['\<' => '<']);
         if ($encode_special_chars) {
@@ -285,7 +237,7 @@ abstract class Formatter
 
         $text_parts = explode("\n", $text);
         foreach ($text_parts as $text_key => $text_part) {
-            // Text part is empty : its a line break
+            // Text part is empty : it's a line break
             if ($text_part === '') {
                 $splitted .= "\n";
                 $current_line_char_count = 0;
@@ -348,33 +300,13 @@ abstract class Formatter
         return $splitted;
     }
 
-    /**
-     * @param string $string
-     * @param int $chunklen
-     * @param $end
-     * @return string
-     */
-    protected function mb_chunk_split(string $string, int $chunklen = 76, $end = PHP_EOL): string
-    {
-        if ($chunklen <= 0) {
-            return $string;
-        }
-        $chars = preg_split("//u", $string, null, PREG_SPLIT_NO_EMPTY);
-        $array = array_chunk($chars, $chunklen);
-        $string_chunks = [];
-        foreach ($array as $item) {
-            $string_chunks[] = implode('', $item);
-        }
-        return implode($end, $string_chunks);
-    }
-
 
     /**
      * Transform dom element to text element
      *
      * @param DOMElement $dom
-     * @param TextElement $text_el
-     * @return TextElement
+     * @param TextElement|null $text_el
+     * @return TextElement|null
      * @throws Exception
      */
     protected function domToOutputText(DOMElement $dom, TextElement $text_el = null): ?TextElement
@@ -421,7 +353,7 @@ abstract class Formatter
      * @param TextElement $text
      * @param DOMNamedNodeMap $node_attributes
      */
-    protected function applyNodeAttributes(TextElement $text, DOMNamedNodeMap $node_attributes)
+    protected function applyNodeAttributes(TextElement $text, DOMNamedNodeMap $node_attributes): void
     {
         $attributes = [];
         foreach ($node_attributes as $name => $attribute) {
@@ -435,7 +367,7 @@ abstract class Formatter
      * @param array $style
      * @return void
      */
-    protected function applyArrayAttributes(TextElement $styled_text, array $style)
+    protected function applyArrayAttributes(TextElement $styled_text, array $style): void
     {
         foreach ($style as $key => $value) {
             if (empty($value)) {
@@ -447,7 +379,7 @@ abstract class Formatter
                 foreach ($style_parts as $style_part) {
                     $style_item = explode(':', $style_part);
                     $item_key = $style_item[0];
-                    $item_value = isset($style_item[1]) ? $style_item[1] : true;
+                    $item_value = $style_item[1] ?? true;
                     $this->applyStyleItem($styled_text, $item_key, $item_value);
                 }
             } else {
@@ -462,7 +394,7 @@ abstract class Formatter
      * @param $value
      * @return void
      */
-    protected function applyStyleItem($styled_text, $key, $value)
+    protected function applyStyleItem($styled_text, $key, $value): void
     {
         if (!isset($this->style_methods_mapping[$key])) {
             throw new InvalidArgumentException('Undefined style ' . $key);

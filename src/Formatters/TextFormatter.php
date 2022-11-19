@@ -2,26 +2,31 @@
 
 namespace SitPHP\Formatters\Formatters;
 
-
-use SitPHP\Formatters\TextElement;
+use Exception;
 
 class TextFormatter extends Formatter
 {
 
     /**
-     * @param TextElement $message
+     * @param string $message
+     * @param int|null $width
      * @return string
+     * @throws Exception
      */
-    function doFormat(TextElement $message): string
+    function format(string $message, int $width = null): string
     {
-        return $message->getText();
+        $parsed = $this->parse($message, $width);
+        if ($parsed === null) {
+            return '';
+        }
+        return $parsed->getText();
     }
 
     /**
      * @param string $message
      * @return string
      */
-    function doUnFormat(string $message): string
+    function unFormat(string $message): string
     {
         return $message;
     }

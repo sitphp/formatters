@@ -6,29 +6,29 @@ class StyleTag
 {
 
     /**
-     * @var
+     * @var string|null
      */
-    private $color;
+    private ?string $color = null;
     /**
-     * @var
+     * @var string|null
      */
-    private $background_color;
-    /**
-     * @var bool
-     */
-    private $bold = false;
+    private ?string $background_color = null;
     /**
      * @var bool
      */
-    private $underline = false;
+    private bool $bold = false;
     /**
      * @var bool
      */
-    private $highlight = false;
+    private bool $underline = false;
     /**
      * @var bool
      */
-    private $blink = false;
+    private bool $highlight = false;
+    /**
+     * @var bool
+     */
+    private bool $blink = false;
 
 
     /**
@@ -42,9 +42,9 @@ class StyleTag
     }
 
     /**
-     * @return mixed
+     * @return string|null
      */
-    function getColor()
+    function getColor(): ?string
     {
         return $this->color;
     }
@@ -60,9 +60,9 @@ class StyleTag
     }
 
     /**
-     * @return mixed
+     * @return string|null
      */
-    function getBackgroundColor()
+    function getBackgroundColor(): ?string
     {
         return $this->background_color;
     }
