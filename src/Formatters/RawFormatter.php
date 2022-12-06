@@ -22,7 +22,7 @@ class RawFormatter extends Formatter
     /**
      * @param string $string
      * @param int $chunklen
-     * @param $end
+     * @param string $end
      * @return string
      */
     protected function mb_chunk_split(string $string, int $chunklen = 76, string $end = PHP_EOL): string

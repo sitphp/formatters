@@ -99,29 +99,6 @@ abstract class Formatter
     }
 
 
-    /*
-     * Formatting methods
-     */
-
-    /**
-     * Format string with formatter
-     *
-     * @param string $message
-     * @param int|null $width
-     * @return mixed
-     * @throws Exception
-     */
-    abstract function format(string $message, int $width = null): string;
-
-
-    /**
-     * UnFormat message
-     *
-     * @param string $message
-     * @return mixed
-     */
-    abstract function unFormat(string $message): string;
-
 
     /**
      * Parse a text to an TextElement object
@@ -200,6 +177,43 @@ abstract class Formatter
 
         return $splitted;
     }
+
+    /**
+     * @param string $message
+     * @param int|null $width
+     * @return string
+     * @throws Exception
+     */
+    function plain(string $message, int $width = null): string
+    {
+        $parsed = $this->parse($message, $width);
+        if ($parsed === null) {
+            return '';
+        }
+        return $parsed->getText();
+    }
+
+    /*
+     * Formatting methods
+     */
+    /**
+     * Format string with formatter
+     *
+     * @param string $message
+     * @param int|null $width
+     * @return mixed
+     * @throws Exception
+     */
+    abstract function format(string $message, int $width = null): string;
+
+
+    /**
+     * UnFormat message
+     *
+     * @param string $message
+     * @return mixed
+     */
+    abstract function unFormat(string $message): string;
 
     /**
      * @param string $text
